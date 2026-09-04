@@ -32,7 +32,7 @@ model User {
 model VerificationCode {
   id        String   @id @default(cuid())
   email     String
-  code      String   @db.VarChar(6)
+  code      String
   expiresAt DateTime
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -59,7 +59,7 @@ model Category {
 model Task {
   id          String    @id @default(cuid())
   title       String
-  description String?   @db.Text
+  description String?
   status      Status    @default(PENDING)
   priority    Priority  @default(MEDIUM)
   dueDate     DateTime?

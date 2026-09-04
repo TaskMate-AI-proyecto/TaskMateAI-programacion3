@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 
 import { env } from './config/env';
+import prisma from './lib/prisma';
 
 export async function buildApp() {
   const app = Fastify({
@@ -16,6 +17,17 @@ export async function buildApp() {
     service: 'TaskMate AI backend',
     status: 'ok',
   }));
+
+  app.get('/health/db', async (request, reply) => {
+    try {
+      // simple lightweight check
+      await prisma.$queryRaw`SELECT 1`;
+      return { db: 'ok' };
+    } catch (err) {
+      reply.status(500);
+      return { db: 'error', error: String(err) };
+    }
+  });
 
   return app;
 }
