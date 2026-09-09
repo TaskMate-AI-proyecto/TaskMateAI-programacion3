@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 
 import { env } from './config/env';
 import prisma from './lib/prisma';
+import authRoutes from './routes/auth';
 
 export async function buildApp() {
   const app = Fastify({
@@ -28,6 +29,9 @@ export async function buildApp() {
       return { db: 'error', error: String(err) };
     }
   });
+
+  // register routes
+  app.register(authRoutes);
 
   return app;
 }
