@@ -42,11 +42,62 @@ export default async function authRoutes(app: FastifyInstance) {
     try {
       await sendVerificationCode(email, code);
     } catch (err) {
-      app.log.error('Error sending verification email', err);
+      app.log.error({ err }, 'Error sending verification email');
       reply.status(500);
       return { success: false, message: 'Error enviando el código' };
     }
 
     return { success: true, message: 'Código de verificación enviado con éxito' };
+  });
+
+  app.post('/api/auth/verify-code', async (request, reply) => {
+    const bodySchema = z.object({
+      email: z.string().email(),
+      code: z.string().regex(/^\d{6}$/),
+    });
+    const parseResult = bodySchema.safeParse(request.body);
+
+    if (!parseResult.success) {
+      reply.status(400);
+      return { success: false, message: 'Email o código inválido' };
+    }
+
+    const { email, code } = parseResult.data;
+    const now = new Date();
+
+    const user = await prisma.$transaction(async (transaction) => {
+      const consumedCode = await transaction.verificationCode.updateMany({
+        where: {
+          email,
+          code,
+          used: false,
+          expiresAt: { gt: now },
+        },
+        data: { used: true },
+      });
+
+      if (consumedCode.count !== 1) {
+        return null;
+      }
+
+      return transaction.user.upsert({
+        where: { email },
+        update: {},
+        create: { email },
+      });
+    });
+
+    if (!user) {
+      reply.status(400);
+      return { success: false, message: 'Código inválido o expirado' };
+    }
+
+    const token = app.jwt.sign({ id: user.id, email: user.email });
+
+    return {
+      success: true,
+      token,
+      user: { id: user.id, email: user.email },
+    };
   });
 }
