@@ -4,6 +4,13 @@ import fastifyJwt from '@fastify/jwt';
 import { env } from './config/env';
 import prisma from './lib/prisma';
 import authRoutes from './routes/auth';
+import categoryRoutes from './routes/categories';
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    authenticate: (request: FastifyRequest) => Promise<void>;
+  }
+}
 
 export async function buildApp() {
   const app = Fastify({
@@ -39,6 +46,7 @@ export async function buildApp() {
 
   // register routes
   app.register(authRoutes);
+  app.register(categoryRoutes);
 
   return app;
 }
