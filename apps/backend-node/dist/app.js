@@ -5,7 +5,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildApp = buildApp;
 const fastify_1 = __importDefault(require("fastify"));
+const cors_1 = __importDefault(require("@fastify/cors"));
+const helmet_1 = __importDefault(require("@fastify/helmet"));
 const jwt_1 = __importDefault(require("@fastify/jwt"));
+const rate_limit_1 = __importDefault(require("@fastify/rate-limit"));
+const swagger_1 = __importDefault(require("@fastify/swagger"));
+const swagger_ui_1 = __importDefault(require("@fastify/swagger-ui"));
 const env_1 = require("./config/env");
 const prisma_1 = __importDefault(require("./lib/prisma"));
 const auth_1 = __importDefault(require("./routes/auth"));
@@ -16,14 +21,45 @@ async function buildApp() {
     const app = (0, fastify_1.default)({
         logger: true,
     });
+    await app.register(cors_1.default, {
+        origin: process.env.NODE_ENV === 'production' ? env_1.env.CORS_ORIGIN?.split(',') ?? false : true,
+    });
+    await app.register(helmet_1.default, { contentSecurityPolicy: false });
+    await app.register(rate_limit_1.default, { max: 100, timeWindow: '1 minute' });
+    await app.register(swagger_1.default, {
+        openapi: {
+            info: { title: 'TaskMate AI API', version: '1.0.0' },
+            components: {
+                securitySchemes: {
+                    bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+                },
+            },
+        },
+    });
     await app.register(jwt_1.default, { secret: env_1.env.JWT_SECRET });
     app.decorate('authenticate', async (request) => {
         await request.jwtVerify();
     });
-    app.get('/health', async () => ({
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-    }));
+    app.get('/health', {
+        schema: {
+            tags: ['Health'],
+            summary: 'Comprueba la disponibilidad del servicio y PostgreSQL',
+            response: {
+                200: { type: 'object', required: ['status', 'timestamp', 'database'], properties: { status: { type: 'string' }, timestamp: { type: 'string', format: 'date-time' }, database: { type: 'string' } } },
+                503: { type: 'object', required: ['status', 'timestamp', 'database'], properties: { status: { type: 'string' }, timestamp: { type: 'string', format: 'date-time' }, database: { type: 'string' } } },
+            },
+        },
+    }, async (request, reply) => {
+        try {
+            await prisma_1.default.$queryRaw `SELECT 1`;
+            return { status: 'ok', timestamp: new Date().toISOString(), database: 'connected' };
+        }
+        catch (err) {
+            app.log.error({ err }, 'Healthcheck database connection failed');
+            reply.status(503);
+            return { status: 'error', timestamp: new Date().toISOString(), database: 'unavailable' };
+        }
+    });
     app.get('/', async () => ({
         service: 'TaskMate AI backend',
         status: 'ok',
@@ -44,6 +80,7 @@ async function buildApp() {
     app.register(ai_1.default);
     app.register(categories_1.default);
     app.register(tasks_1.default);
+    await app.register(swagger_ui_1.default, { routePrefix: '/docs' });
     return app;
 }
 const server = buildApp();
