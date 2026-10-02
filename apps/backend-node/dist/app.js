@@ -9,6 +9,7 @@ const jwt_1 = __importDefault(require("@fastify/jwt"));
 const env_1 = require("./config/env");
 const prisma_1 = __importDefault(require("./lib/prisma"));
 const auth_1 = __importDefault(require("./routes/auth"));
+const ai_1 = __importDefault(require("./routes/ai"));
 const categories_1 = __importDefault(require("./routes/categories"));
 const tasks_1 = __importDefault(require("./routes/tasks"));
 async function buildApp() {
@@ -40,6 +41,7 @@ async function buildApp() {
     });
     // register routes
     app.register(auth_1.default);
+    app.register(ai_1.default);
     app.register(categories_1.default);
     app.register(tasks_1.default);
     return app;

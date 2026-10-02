@@ -22,6 +22,7 @@
   "type": "commonjs",
   "dependencies": {
     "@fastify/jwt": "^10.2.2",
+    "@google/genai": "^2.26.0",
     "@prisma/adapter-pg": "^7.10.0",
     "dotenv": "^17.4.2",
     "fastify": "^5.12.1",

@@ -4,6 +4,7 @@ import fastifyJwt from '@fastify/jwt';
 import { env } from './config/env';
 import prisma from './lib/prisma';
 import authRoutes from './routes/auth';
+import aiRoutes from './routes/ai';
 import categoryRoutes from './routes/categories';
 import taskRoutes from './routes/tasks';
 
@@ -47,6 +48,7 @@ export async function buildApp() {
 
   // register routes
   app.register(authRoutes);
+  app.register(aiRoutes);
   app.register(categoryRoutes);
   app.register(taskRoutes);
 
