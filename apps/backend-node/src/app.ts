@@ -5,6 +5,7 @@ import { env } from './config/env';
 import prisma from './lib/prisma';
 import authRoutes from './routes/auth';
 import categoryRoutes from './routes/categories';
+import taskRoutes from './routes/tasks';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -47,6 +48,7 @@ export async function buildApp() {
   // register routes
   app.register(authRoutes);
   app.register(categoryRoutes);
+  app.register(taskRoutes);
 
   return app;
 }
