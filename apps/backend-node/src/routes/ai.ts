@@ -1,6 +1,7 @@
 import { Status } from '@prisma/client';
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { errorResponse, protectedRoute } from '../docs/openapi';
 import prisma from '../lib/prisma';
 import { generateDailySummary, generateSubtasks } from '../services/gemini';
 
@@ -29,7 +30,13 @@ function getGeminiErrorResponse(error: unknown) {
 }
 
 export default async function aiRoutes(app: FastifyInstance) {
-  app.post('/api/ai/generate-subtasks', { preHandler: app.authenticate }, async (request, reply) => {
+  app.post('/api/ai/generate-subtasks', {
+    preHandler: app.authenticate,
+    schema: protectedRoute('AI', 'Genera entre tres y cinco subtareas con Gemini', {
+      body: { type: 'object', required: ['title'], properties: { title: { type: 'string' }, description: { type: 'string' } } },
+      response: { 200: { type: 'object', properties: { success: { type: 'boolean' }, subtasks: { type: 'array', items: { type: 'string' } } } }, 400: errorResponse, 401: errorResponse, 500: errorResponse, 503: errorResponse },
+    }),
+  }, async (request, reply) => {
     const bodyResult = generateSubtasksSchema.safeParse(request.body);
 
     if (!bodyResult.success) {
@@ -48,7 +55,12 @@ export default async function aiRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post('/api/ai/summarize', { preHandler: app.authenticate }, async (request, reply) => {
+  app.post('/api/ai/summarize', {
+    preHandler: app.authenticate,
+    schema: protectedRoute('AI', 'Genera un resumen diario de tareas pendientes con Gemini', {
+      response: { 200: { type: 'object', properties: { success: { type: 'boolean' }, summary: { type: 'string' } } }, 401: errorResponse, 500: errorResponse, 503: errorResponse },
+    }),
+  }, async (request, reply) => {
     const { id: userId } = request.user as JwtUser;
     const tasks = await prisma.task.findMany({
       where: { userId, status: { not: Status.COMPLETED } },

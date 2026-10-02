@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { categoryResponse, errorResponse, protectedRoute } from '../docs/openapi';
 import prisma from '../lib/prisma';
 
 const categoryIdSchema = z.object({ id: z.string().min(1) });
@@ -19,7 +20,7 @@ type JwtUser = {
 };
 
 export default async function categoryRoutes(app: FastifyInstance) {
-  app.get('/api/categories', { preHandler: app.authenticate }, async (request) => {
+  app.get('/api/categories', { preHandler: app.authenticate, schema: protectedRoute('Categories', 'Lista las categorías del usuario', { response: { 200: { type: 'array', items: categoryResponse }, 401: errorResponse } }) }, async (request) => {
     const { id: userId } = request.user as JwtUser;
 
     return prisma.category.findMany({
@@ -29,7 +30,13 @@ export default async function categoryRoutes(app: FastifyInstance) {
     });
   });
 
-  app.post('/api/categories', { preHandler: app.authenticate }, async (request, reply) => {
+  app.post('/api/categories', {
+    preHandler: app.authenticate,
+    schema: protectedRoute('Categories', 'Crea una categoría', {
+      body: { type: 'object', required: ['name'], properties: { name: { type: 'string' }, color: { type: 'string', pattern: '^#[0-9A-Fa-f]{6}$' } } },
+      response: { 201: categoryResponse, 400: errorResponse, 401: errorResponse },
+    }),
+  }, async (request, reply) => {
     const parseResult = createCategorySchema.safeParse(request.body);
 
     if (!parseResult.success) {
@@ -47,7 +54,14 @@ export default async function categoryRoutes(app: FastifyInstance) {
     return category;
   });
 
-  app.put('/api/categories/:id', { preHandler: app.authenticate }, async (request, reply) => {
+  app.put('/api/categories/:id', {
+    preHandler: app.authenticate,
+    schema: protectedRoute('Categories', 'Actualiza una categoría propia', {
+      params: { type: 'object', required: ['id'], properties: { id: { type: 'string' } } },
+      body: { type: 'object', minProperties: 1, properties: { name: { type: 'string' }, color: { type: 'string', pattern: '^#[0-9A-Fa-f]{6}$' } } },
+      response: { 200: categoryResponse, 400: errorResponse, 401: errorResponse, 404: errorResponse },
+    }),
+  }, async (request, reply) => {
     const paramsResult = categoryIdSchema.safeParse(request.params);
     const bodyResult = updateCategorySchema.safeParse(request.body);
 
@@ -73,7 +87,13 @@ export default async function categoryRoutes(app: FastifyInstance) {
     });
   });
 
-  app.delete('/api/categories/:id', { preHandler: app.authenticate }, async (request, reply) => {
+  app.delete('/api/categories/:id', {
+    preHandler: app.authenticate,
+    schema: protectedRoute('Categories', 'Elimina una categoría propia', {
+      params: { type: 'object', required: ['id'], properties: { id: { type: 'string' } } },
+      response: { 200: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' } } }, 400: errorResponse, 401: errorResponse, 404: errorResponse },
+    }),
+  }, async (request, reply) => {
     const paramsResult = categoryIdSchema.safeParse(request.params);
 
     if (!paramsResult.success) {

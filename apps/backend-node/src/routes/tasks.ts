@@ -1,6 +1,7 @@
 import { Priority, Status } from '@prisma/client';
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { errorResponse, protectedRoute, taskResponse } from '../docs/openapi';
 import prisma from '../lib/prisma';
 
 const taskIdSchema = z.object({ id: z.string().min(1) });
@@ -45,7 +46,13 @@ async function findUserCategory(categoryId: string, userId: string) {
 }
 
 export default async function taskRoutes(app: FastifyInstance) {
-  app.get('/api/tasks', { preHandler: app.authenticate }, async (request, reply) => {
+  app.get('/api/tasks', {
+    preHandler: app.authenticate,
+    schema: protectedRoute('Tasks', 'Lista las tareas del usuario con filtros opcionales', {
+      querystring: { type: 'object', properties: { categoryId: { type: 'string' }, completed: { type: 'string', enum: ['true', 'false'] } } },
+      response: { 200: { type: 'array', items: taskResponse }, 400: errorResponse, 401: errorResponse },
+    }),
+  }, async (request, reply) => {
     const queryResult = taskQuerySchema.safeParse(request.query);
 
     if (!queryResult.success) {
@@ -64,7 +71,13 @@ export default async function taskRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get('/api/tasks/:id', { preHandler: app.authenticate }, async (request, reply) => {
+  app.get('/api/tasks/:id', {
+    preHandler: app.authenticate,
+    schema: protectedRoute('Tasks', 'Obtiene una tarea propia por ID', {
+      params: { type: 'object', required: ['id'], properties: { id: { type: 'string' } } },
+      response: { 200: taskResponse, 400: errorResponse, 401: errorResponse, 404: errorResponse },
+    }),
+  }, async (request, reply) => {
     const paramsResult = taskIdSchema.safeParse(request.params);
 
     if (!paramsResult.success) {
@@ -86,7 +99,13 @@ export default async function taskRoutes(app: FastifyInstance) {
     return task;
   });
 
-  app.post('/api/tasks', { preHandler: app.authenticate }, async (request, reply) => {
+  app.post('/api/tasks', {
+    preHandler: app.authenticate,
+    schema: protectedRoute('Tasks', 'Crea una tarea y la vincula opcionalmente a una categoría', {
+      body: { type: 'object', required: ['title'], properties: { title: { type: 'string' }, description: { type: 'string' }, dueDate: { type: 'string', format: 'date-time' }, priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] }, status: { type: 'string', enum: ['PENDING', 'IN_PROGRESS', 'COMPLETED'] }, categoryId: { type: 'string' } } },
+      response: { 201: taskResponse, 400: errorResponse, 401: errorResponse, 404: errorResponse },
+    }),
+  }, async (request, reply) => {
     const bodyResult = taskDataSchema.safeParse(request.body);
 
     if (!bodyResult.success) {
@@ -111,7 +130,14 @@ export default async function taskRoutes(app: FastifyInstance) {
     return task;
   });
 
-  app.put('/api/tasks/:id', { preHandler: app.authenticate }, async (request, reply) => {
+  app.put('/api/tasks/:id', {
+    preHandler: app.authenticate,
+    schema: protectedRoute('Tasks', 'Actualiza una tarea propia', {
+      params: { type: 'object', required: ['id'], properties: { id: { type: 'string' } } },
+      body: { type: 'object', minProperties: 1, properties: { title: { type: 'string' }, description: { type: 'string' }, dueDate: { type: 'string', format: 'date-time' }, priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] }, status: { type: 'string', enum: ['PENDING', 'IN_PROGRESS', 'COMPLETED'] }, categoryId: { type: 'string' } } },
+      response: { 200: taskResponse, 400: errorResponse, 401: errorResponse, 404: errorResponse },
+    }),
+  }, async (request, reply) => {
     const paramsResult = taskIdSchema.safeParse(request.params);
     const bodyResult = updateTaskSchema.safeParse(request.body);
 
@@ -145,7 +171,13 @@ export default async function taskRoutes(app: FastifyInstance) {
     });
   });
 
-  app.delete('/api/tasks/:id', { preHandler: app.authenticate }, async (request, reply) => {
+  app.delete('/api/tasks/:id', {
+    preHandler: app.authenticate,
+    schema: protectedRoute('Tasks', 'Elimina una tarea propia', {
+      params: { type: 'object', required: ['id'], properties: { id: { type: 'string' } } },
+      response: { 200: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' } } }, 400: errorResponse, 401: errorResponse, 404: errorResponse },
+    }),
+  }, async (request, reply) => {
     const paramsResult = taskIdSchema.safeParse(request.params);
 
     if (!paramsResult.success) {
