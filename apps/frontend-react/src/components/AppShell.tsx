@@ -3,21 +3,21 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
 const navigation = [
-  { label: 'Resumen', to: '/', icon: LayoutDashboard },
+  { label: 'Resumen', to: '/dashboard', icon: LayoutDashboard },
   { label: 'Tareas', to: '/tasks', icon: ListTodo },
 ]
 
 export function AppShell() {
-  const { user, signOut } = useAuth()
+  const { user, logout } = useAuth()
 
   return (
     <div className="min-h-screen bg-canvas text-ink">
       <header className="border-b border-ink/10 bg-white/80 px-5 py-4 backdrop-blur sm:px-8">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-          <NavLink className="font-display text-xl font-semibold tracking-wide" to="/">TaskMate</NavLink>
+          <NavLink className="font-display text-xl font-semibold tracking-wide" to="/dashboard">TaskMate</NavLink>
           <div className="flex items-center gap-3 text-sm">
             <span className="hidden text-ink/60 sm:inline">{user?.email ?? 'Espacio personal'}</span>
-            <button aria-label="Cerrar sesión" className="icon-button" onClick={signOut} title="Cerrar sesión" type="button"><LogOut size={18} /></button>
+            <button aria-label="Cerrar sesión" className="icon-button" onClick={logout} title="Cerrar sesión" type="button"><LogOut size={18} /></button>
           </div>
         </div>
       </header>
