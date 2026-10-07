@@ -28,9 +28,6 @@ export async function sendVerificationCode(email: string, code: string) {
   const html = `<p>Tu código de verificación es: <strong>${code}</strong></p><p>Caduca en 10 minutos.</p>`;
 
   if (!hasSmtp || !transporter) {
-    // Fallback para desarrollo: imprimir en consola
-    // eslint-disable-next-line no-console
-    console.info(`[EMAIL-DEV] Envío simulado a ${email}: ${code}`);
     return;
   }
 

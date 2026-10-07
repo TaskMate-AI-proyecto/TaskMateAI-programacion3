@@ -12,5 +12,6 @@ const envSchema = zod_1.z.object({
     DATABASE_URL: zod_1.z.string().min(1),
     JWT_SECRET: zod_1.z.string().min(1),
     GEMINI_API_KEY: zod_1.z.string().min(1),
+    FRONTEND_URL: zod_1.z.string().url().default('http://localhost:5173'),
 });
 exports.env = envSchema.parse(process.env);
