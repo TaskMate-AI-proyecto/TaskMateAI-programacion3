@@ -8,6 +8,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   JWT_SECRET: z.string().min(1),
   GEMINI_API_KEY: z.string().min(1),
+  FRONTEND_URL: z.string().url().default('http://localhost:5173'),
 });
 
 export const env = envSchema.parse(process.env);
