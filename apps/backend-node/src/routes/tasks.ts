@@ -1,7 +1,8 @@
 import { Priority, Status } from '@prisma/client';
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
+import { failure, getUserId } from '../lib/http';
 
 const taskIdSchema = z.object({ id: z.string().min(1) });
 const taskDataSchema = z.object({
@@ -12,10 +13,9 @@ const taskDataSchema = z.object({
   status: z.nativeEnum(Status).optional(),
   categoryId: z.string().min(1).optional(),
 });
-const updateTaskSchema = taskDataSchema.partial().refine(
-  (data) => Object.keys(data).length > 0,
-  'Debe enviar al menos un campo para actualizar',
-);
+const updateTaskSchema = taskDataSchema
+  .partial()
+  .refine((data) => Object.keys(data).length > 0, 'Debe enviar al menos un campo para actualizar');
 const taskQuerySchema = z.object({
   categoryId: z.string().min(1).optional(),
   completed: z.enum(['true', 'false']).optional(),
@@ -32,10 +32,25 @@ const taskSelect = {
   category: { select: { id: true, name: true, color: true } },
 } as const;
 
-type JwtUser = {
-  id: string;
-  email: string;
-};
+function toStatusFilter(completed: 'true' | 'false' | undefined) {
+  if (completed === undefined) return undefined;
+
+  return completed === 'true' ? Status.COMPLETED : { not: Status.COMPLETED };
+}
+
+function parseTaskId(params: unknown) {
+  const result = taskIdSchema.safeParse(params);
+
+  return result.success ? result.data.id : undefined;
+}
+
+function findUserTask(id: string, userId: string) {
+  return prisma.task.findFirst({ where: { id, userId }, select: taskSelect });
+}
+
+function deleteUserTask(id: string, userId: string) {
+  return prisma.task.deleteMany({ where: { id, userId } });
+}
 
 async function findUserCategory(categoryId: string, userId: string) {
   return prisma.category.findFirst({
@@ -44,125 +59,107 @@ async function findUserCategory(categoryId: string, userId: string) {
   });
 }
 
+async function categoryFailure(
+  reply: FastifyReply,
+  categoryId: string | undefined,
+  userId: string,
+) {
+  if (categoryId === undefined || (await findUserCategory(categoryId, userId))) return undefined;
+
+  return failure(reply, 404, 'Categoría no encontrada');
+}
+
+function taskNotFound(reply: FastifyReply) {
+  return failure(reply, 404, 'Tarea no encontrada');
+}
+
+async function withValidCategory<T extends { categoryId?: string }, R>(
+  reply: FastifyReply,
+  data: T,
+  userId: string,
+  save: (data: T) => Promise<R>,
+) {
+  const missingCategory = await categoryFailure(reply, data.categoryId, userId);
+
+  return missingCategory ?? save(data);
+}
+
+type TaskIdHandler = (id: string, userId: string, reply: FastifyReply) => Promise<unknown>;
+
+function withTaskId(handler: TaskIdHandler) {
+  return async (request: FastifyRequest, reply: FastifyReply) => {
+    const id = parseTaskId(request.params);
+
+    if (!id) return failure(reply, 400, 'Id de tarea inválido');
+
+    return handler(id, getUserId(request), reply);
+  };
+}
+
 export default async function taskRoutes(app: FastifyInstance) {
   app.get('/api/tasks', { preHandler: app.authenticate }, async (request, reply) => {
     const queryResult = taskQuerySchema.safeParse(request.query);
 
-    if (!queryResult.success) {
-      reply.status(400);
-      return { success: false, message: 'Filtros de tareas inválidos' };
-    }
+    if (!queryResult.success) return failure(reply, 400, 'Filtros de tareas inválidos');
 
-    const { id: userId } = request.user as JwtUser;
     const { categoryId, completed } = queryResult.data;
-    const status = completed === undefined ? undefined : completed === 'true' ? Status.COMPLETED : { not: Status.COMPLETED };
 
     return prisma.task.findMany({
-      where: { userId, categoryId, status },
+      where: { userId: getUserId(request), categoryId, status: toStatusFilter(completed) },
       select: taskSelect,
       orderBy: { createdAt: 'asc' },
     });
   });
 
-  app.get('/api/tasks/:id', { preHandler: app.authenticate }, async (request, reply) => {
-    const paramsResult = taskIdSchema.safeParse(request.params);
-
-    if (!paramsResult.success) {
-      reply.status(400);
-      return { success: false, message: 'Id de tarea inválido' };
-    }
-
-    const { id: userId } = request.user as JwtUser;
-    const task = await prisma.task.findFirst({
-      where: { id: paramsResult.data.id, userId },
-      select: taskSelect,
-    });
-
-    if (!task) {
-      reply.status(404);
-      return { success: false, message: 'Tarea no encontrada' };
-    }
-
-    return task;
-  });
+  app.get(
+    '/api/tasks/:id',
+    { preHandler: app.authenticate },
+    withTaskId(
+      async (id, userId, reply) => (await findUserTask(id, userId)) ?? taskNotFound(reply),
+    ),
+  );
 
   app.post('/api/tasks', { preHandler: app.authenticate }, async (request, reply) => {
     const bodyResult = taskDataSchema.safeParse(request.body);
 
-    if (!bodyResult.success) {
-      reply.status(400);
-      return { success: false, message: 'Datos de tarea inválidos' };
-    }
+    if (!bodyResult.success) return failure(reply, 400, 'Datos de tarea inválidos');
 
-    const { id: userId } = request.user as JwtUser;
-    const { categoryId, ...taskData } = bodyResult.data;
+    const userId = getUserId(request);
 
-    if (categoryId && !(await findUserCategory(categoryId, userId))) {
-      reply.status(404);
-      return { success: false, message: 'Categoría no encontrada' };
-    }
+    return withValidCategory(reply, bodyResult.data, userId, async (data) => {
+      const task = await prisma.task.create({ data: { ...data, userId }, select: taskSelect });
 
-    const task = await prisma.task.create({
-      data: { ...taskData, categoryId, userId },
-      select: taskSelect,
+      reply.status(201);
+      return task;
     });
-
-    reply.status(201);
-    return task;
   });
 
   app.put('/api/tasks/:id', { preHandler: app.authenticate }, async (request, reply) => {
     const paramsResult = taskIdSchema.safeParse(request.params);
     const bodyResult = updateTaskSchema.safeParse(request.body);
 
-    if (!paramsResult.success || !bodyResult.success) {
-      reply.status(400);
-      return { success: false, message: 'Datos de tarea inválidos' };
-    }
+    if (!paramsResult.success || !bodyResult.success)
+      return failure(reply, 400, 'Datos de tarea inválidos');
 
-    const { id: userId } = request.user as JwtUser;
-    const task = await prisma.task.findFirst({
-      where: { id: paramsResult.data.id, userId },
-      select: { id: true },
-    });
+    const userId = getUserId(request);
+    const task = await findUserTask(paramsResult.data.id, userId);
 
-    if (!task) {
-      reply.status(404);
-      return { success: false, message: 'Tarea no encontrada' };
-    }
+    if (!task) return taskNotFound(reply);
 
-    const { categoryId, ...taskData } = bodyResult.data;
-
-    if (categoryId && !(await findUserCategory(categoryId, userId))) {
-      reply.status(404);
-      return { success: false, message: 'Categoría no encontrada' };
-    }
-
-    return prisma.task.update({
-      where: { id: task.id },
-      data: { ...taskData, ...(categoryId === undefined ? {} : { categoryId }) },
-      select: taskSelect,
-    });
+    return withValidCategory(reply, bodyResult.data, userId, (data) =>
+      prisma.task.update({ where: { id: task.id }, data, select: taskSelect }),
+    );
   });
 
-  app.delete('/api/tasks/:id', { preHandler: app.authenticate }, async (request, reply) => {
-    const paramsResult = taskIdSchema.safeParse(request.params);
+  app.delete(
+    '/api/tasks/:id',
+    { preHandler: app.authenticate },
+    withTaskId(async (id, userId, reply) => {
+      const deletedTask = await deleteUserTask(id, userId);
 
-    if (!paramsResult.success) {
-      reply.status(400);
-      return { success: false, message: 'Id de tarea inválido' };
-    }
+      if (deletedTask.count === 0) return taskNotFound(reply);
 
-    const { id: userId } = request.user as JwtUser;
-    const deletedTask = await prisma.task.deleteMany({
-      where: { id: paramsResult.data.id, userId },
-    });
-
-    if (deletedTask.count === 0) {
-      reply.status(404);
-      return { success: false, message: 'Tarea no encontrada' };
-    }
-
-    return { success: true, message: 'Tarea eliminada con éxito' };
-  });
+      return { success: true, message: 'Tarea eliminada con éxito' };
+    }),
+  );
 }

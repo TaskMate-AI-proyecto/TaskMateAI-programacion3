@@ -105,31 +105,26 @@ async function main() {
     }),
   );
 
-  console.log('Seed ejecutado correctamente.');
-  console.log(
-    JSON.stringify(
-      {
-        user: {
-          email: user.email,
-          id: user.id,
-        },
-        categoriesCreated: categories.length,
-        tasksCreated: tasks.length,
-        categories: categories.map((category) => ({
-          name: category.name,
-          color: category.color,
-        })),
-        tasks: tasks.map((task) => ({
-          title: task.title,
-          status: task.status,
-          priority: task.priority,
-          categoryId: task.categoryId,
-        })),
-      },
-      null,
-      2,
-    ),
-  );
+  const summary = {
+    user: {
+      email: user.email,
+      id: user.id,
+    },
+    categoriesCreated: categories.length,
+    tasksCreated: tasks.length,
+    categories: categories.map((category) => ({
+      name: category.name,
+      color: category.color,
+    })),
+    tasks: tasks.map((task) => ({
+      title: task.title,
+      status: task.status,
+      priority: task.priority,
+      categoryId: task.categoryId,
+    })),
+  };
+
+  process.stdout.write(`Seed ejecutado correctamente.\n${JSON.stringify(summary, null, 2)}\n`);
 }
 
 main()

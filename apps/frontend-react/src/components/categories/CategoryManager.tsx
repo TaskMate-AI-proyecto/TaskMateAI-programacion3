@@ -1,10 +1,12 @@
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { Pencil, Tags, Trash2 } from 'lucide-react'
 import { createCategory, deleteCategory, updateCategory } from '../../api/categoriesApi'
 import { getApiErrorMessage } from '../../api/errors'
+import { useSafeAction } from '../../hooks/useSafeAction'
 import { useToast } from '../../hooks/useToast'
-import type { Category } from '../../types/api'
-import { fieldClass } from '../tasks/taskUtils'
+import type { Category, CategoryInput } from '../../types/api'
+import { ConfirmDelete } from '../ui/ConfirmDelete'
+import { fieldClass } from '../ui/fieldClass'
 import { Modal } from '../ui/Modal'
 
 interface CategoryManagerProps {
@@ -14,61 +16,107 @@ interface CategoryManagerProps {
 }
 
 const palette = ['#EF6F5E', '#4B9B84', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6', '#6B7280']
+const defaultColor = palette[0].toLowerCase()
+const rowActionClass = 'inline-grid h-8 w-8 place-items-center rounded-md text-ink/60 hover:bg-ink/5'
+
+function toCategoryForm(editing: Category | null): Required<CategoryInput> {
+  if (!editing) return { name: '', color: defaultColor }
+
+  return { name: editing.name, color: editing.color.toLowerCase() }
+}
+
+function submitLabel(isSaving: boolean, isEditing: boolean) {
+  if (isSaving) return 'Guardando...'
+
+  return isEditing ? 'Guardar' : 'Crear categoría'
+}
+
+interface CategoryRowProps {
+  category: Category
+  isBusy: boolean
+  onEdit: (category: Category) => void
+  onDelete: (category: Category) => void
+}
+
+function CategoryRow({ category, isBusy, onEdit, onDelete }: CategoryRowProps) {
+  const [confirming, setConfirming] = useState(false)
+
+  return (
+    <li className="flex items-center gap-3 rounded-md border border-ink/10 bg-white px-3 py-2">
+      <span aria-hidden className="h-4 w-4 shrink-0 rounded-full" style={{ backgroundColor: category.color }} />
+      <span className="min-w-0 flex-1 truncate text-sm font-medium">{category.name}</span>
+      {confirming ? <ConfirmDelete isBusy={isBusy} onCancel={() => setConfirming(false)} onConfirm={() => onDelete(category)} /> : (
+        <>
+          <button aria-label={`Editar ${category.name}`} className={rowActionClass} onClick={() => onEdit(category)} type="button"><Pencil size={15} /></button>
+          <button aria-label={`Eliminar ${category.name}`} className={rowActionClass} onClick={() => setConfirming(true)} type="button"><Trash2 size={15} /></button>
+        </>
+      )}
+    </li>
+  )
+}
+
+interface CategoryFormProps {
+  editing: Category | null
+  isSaving: boolean
+  onSubmit: (input: Required<CategoryInput>) => void
+  onCancel: () => void
+}
+
+function CategoryForm({ editing, isSaving, onSubmit, onCancel }: CategoryFormProps) {
+  const [values, setValues] = useState(() => toCategoryForm(editing))
+
+  return (
+    <form className="space-y-3 border-t border-ink/10 pt-4" onSubmit={(event) => { event.preventDefault(); onSubmit({ name: values.name.trim(), color: values.color }) }}>
+      <h3 className="text-sm font-semibold">{editing ? 'Editar categoría' : 'Nueva categoría'}</h3>
+      <label className="block text-sm font-medium">Nombre
+        <input className={fieldClass} maxLength={40} onChange={(event) => setValues({ ...values, name: event.target.value })} required value={values.name} />
+      </label>
+      <div className="flex flex-wrap items-center gap-2">
+        {palette.map((swatch) => (
+          <button aria-label={`Color ${swatch}`} aria-pressed={values.color === swatch.toLowerCase()} className={`h-7 w-7 rounded-full border-2 ${values.color === swatch.toLowerCase() ? 'border-ink' : 'border-transparent'}`} key={swatch} onClick={() => setValues({ ...values, color: swatch.toLowerCase() })} style={{ backgroundColor: swatch }} type="button" />
+        ))}
+        <input aria-label="Color personalizado" className="h-7 w-10 cursor-pointer rounded border border-ink/20 bg-white" onChange={(event) => setValues({ ...values, color: event.target.value })} type="color" value={values.color} />
+      </div>
+      <div className="flex justify-end gap-2">
+        {editing && <button className="rounded-md px-4 py-2 text-sm font-medium text-ink/70 hover:bg-ink/5" onClick={onCancel} type="button">Cancelar edición</button>}
+        <button className="command-button disabled:opacity-60" disabled={isSaving || !values.name.trim()} type="submit">{submitLabel(isSaving, editing !== null)}</button>
+      </div>
+    </form>
+  )
+}
 
 export function CategoryManager({ categories, onChanged, onClose }: CategoryManagerProps) {
   const { notify } = useToast()
+  const runSafely = useSafeAction()
   const [editing, setEditing] = useState<Category | null>(null)
-  const [name, setName] = useState('')
-  const [color, setColor] = useState(palette[0].toLowerCase())
-  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [formVersion, setFormVersion] = useState(0)
   const [isSaving, setIsSaving] = useState(false)
 
   function resetForm() {
     setEditing(null)
-    setName('')
-    setColor(palette[0].toLowerCase())
+    setFormVersion((version) => version + 1)
   }
 
-  function startEditing(category: Category) {
-    setEditing(category)
-    setName(category.name)
-    setColor(category.color.toLowerCase())
-    setConfirmId(null)
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function handleSubmit(input: Required<CategoryInput>) {
     setIsSaving(true)
-    try {
-      if (editing) {
-        await updateCategory(editing.id, { name: name.trim(), color })
-        notify('Categoría actualizada')
-      } else {
-        await createCategory({ name: name.trim(), color })
-        notify('Categoría creada')
-      }
+    const result = await runSafely(() => (editing ? updateCategory(editing.id, input) : createCategory(input)))
+    if (result.ok) {
+      notify(editing ? 'Categoría actualizada' : 'Categoría creada')
       resetForm()
       onChanged()
-    } catch (error) {
-      notify(getApiErrorMessage(error), 'error')
-    } finally {
-      setIsSaving(false)
     }
+    setIsSaving(false)
   }
 
   async function handleDelete(category: Category) {
     setIsSaving(true)
-    try {
-      await deleteCategory(category.id)
+    const result = await runSafely(() => deleteCategory(category.id), (error) => getApiErrorMessage(error, 'No se pudo eliminar. Si tiene tareas asociadas, reasígnalas primero.'))
+    if (result.ok) {
       notify('Categoría eliminada')
       if (editing?.id === category.id) resetForm()
-      setConfirmId(null)
       onChanged()
-    } catch (error) {
-      notify(getApiErrorMessage(error, 'No se pudo eliminar. Si tiene tareas asociadas, reasígnalas primero.'), 'error')
-    } finally {
-      setIsSaving(false)
     }
+    setIsSaving(false)
   }
 
   return (
@@ -77,42 +125,10 @@ export function CategoryManager({ categories, onChanged, onClose }: CategoryMana
         <div className="empty-state mb-5 min-h-32 rounded-md"><Tags size={24} /><p className="text-sm">Todavía no hay categorías. Crea una abajo.</p></div>
       ) : (
         <ul className="mb-5 space-y-2">
-          {categories.map((category) => (
-            <li className="flex items-center gap-3 rounded-md border border-ink/10 bg-white px-3 py-2" key={category.id}>
-              <span aria-hidden className="h-4 w-4 shrink-0 rounded-full" style={{ backgroundColor: category.color }} />
-              <span className="min-w-0 flex-1 truncate text-sm font-medium">{category.name}</span>
-              {confirmId === category.id ? (
-                <div className="flex items-center gap-1 text-xs">
-                  <span className="text-ink/60">¿Eliminar?</span>
-                  <button className="rounded-md bg-coral px-2 py-1 font-semibold text-white disabled:opacity-50" disabled={isSaving} onClick={() => void handleDelete(category)} type="button">Sí</button>
-                  <button className="rounded-md px-2 py-1 font-semibold text-ink/70 hover:bg-ink/5" onClick={() => setConfirmId(null)} type="button">No</button>
-                </div>
-              ) : (
-                <>
-                  <button aria-label={`Editar ${category.name}`} className="inline-grid h-8 w-8 place-items-center rounded-md text-ink/60 hover:bg-ink/5" onClick={() => startEditing(category)} type="button"><Pencil size={15} /></button>
-                  <button aria-label={`Eliminar ${category.name}`} className="inline-grid h-8 w-8 place-items-center rounded-md text-ink/60 hover:bg-ink/5" onClick={() => setConfirmId(category.id)} type="button"><Trash2 size={15} /></button>
-                </>
-              )}
-            </li>
-          ))}
+          {categories.map((category) => <CategoryRow category={category} isBusy={isSaving} key={category.id} onDelete={(item) => void handleDelete(item)} onEdit={setEditing} />)}
         </ul>
       )}
-      <form className="space-y-3 border-t border-ink/10 pt-4" onSubmit={(event) => void handleSubmit(event)}>
-        <h3 className="text-sm font-semibold">{editing ? 'Editar categoría' : 'Nueva categoría'}</h3>
-        <label className="block text-sm font-medium">Nombre
-          <input className={fieldClass} maxLength={40} onChange={(event) => setName(event.target.value)} required value={name} />
-        </label>
-        <div className="flex flex-wrap items-center gap-2">
-          {palette.map((swatch) => (
-            <button aria-label={`Color ${swatch}`} aria-pressed={color === swatch.toLowerCase()} className={`h-7 w-7 rounded-full border-2 ${color === swatch.toLowerCase() ? 'border-ink' : 'border-transparent'}`} key={swatch} onClick={() => setColor(swatch.toLowerCase())} style={{ backgroundColor: swatch }} type="button" />
-          ))}
-          <input aria-label="Color personalizado" className="h-7 w-10 cursor-pointer rounded border border-ink/20 bg-white" onChange={(event) => setColor(event.target.value)} type="color" value={color} />
-        </div>
-        <div className="flex justify-end gap-2">
-          {editing && <button className="rounded-md px-4 py-2 text-sm font-medium text-ink/70 hover:bg-ink/5" onClick={resetForm} type="button">Cancelar edición</button>}
-          <button className="command-button disabled:opacity-60" disabled={isSaving || !name.trim()} type="submit">{isSaving ? 'Guardando...' : editing ? 'Guardar' : 'Crear categoría'}</button>
-        </div>
-      </form>
+      <CategoryForm editing={editing} isSaving={isSaving} key={`${editing?.id ?? 'new'}-${formVersion}`} onCancel={resetForm} onSubmit={(input) => void handleSubmit(input)} />
     </Modal>
   )
 }

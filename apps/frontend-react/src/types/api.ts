@@ -53,3 +53,13 @@ export interface TaskQuery {
   categoryId?: string
   completed?: boolean
 }
+
+export interface AiSubtasksResponse {
+  success: true
+  subtasks: string[]
+}
+
+export interface AiSummaryResponse {
+  success: true
+  summary: string
+}

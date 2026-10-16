@@ -1,8 +1,11 @@
 import { env } from '../config/env';
+import { readProperty } from '../lib/objects';
 
 const model = 'gemini-2.5-flash';
 const maxAttempts = 3;
 const initialRetryDelayMs = 500;
+const transientStatuses = new Set([429, 500, 502, 503, 504]);
+const transientCodes = new Set(['ECONNRESET', 'ETIMEDOUT', 'ENETUNREACH']);
 
 async function getClient() {
   const { GoogleGenAI } = await import('@google/genai');
@@ -17,28 +20,21 @@ function parseJsonResponse(text: string) {
     .trim();
   const objectStart = withoutFences.indexOf('{');
   const objectEnd = withoutFences.lastIndexOf('}');
-  const json = objectStart >= 0 && objectEnd > objectStart ? withoutFences.slice(objectStart, objectEnd + 1) : withoutFences;
+  const json =
+    objectStart >= 0 && objectEnd > objectStart
+      ? withoutFences.slice(objectStart, objectEnd + 1)
+      : withoutFences;
 
   return JSON.parse(json) as unknown;
 }
 
 function isTransientGeminiError(error: unknown) {
-  if (typeof error !== 'object' || error === null) {
-    return false;
-  }
-
-  const status = 'status' in error ? error.status : undefined;
-  const code = 'code' in error ? error.code : undefined;
+  const status = readProperty(error, 'status');
+  const code = readProperty(error, 'code');
 
   return (
-    status === 429 ||
-    status === 500 ||
-    status === 502 ||
-    status === 503 ||
-    status === 504 ||
-    code === 'ECONNRESET' ||
-    code === 'ETIMEDOUT' ||
-    code === 'ENETUNREACH'
+    (typeof status === 'number' && transientStatuses.has(status)) ||
+    (typeof code === 'string' && transientCodes.has(code))
   );
 }
 
@@ -66,6 +62,26 @@ async function withGeminiRetry<T>(operation: () => Promise<T>) {
   throw lastError;
 }
 
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isSubtaskList(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) && value.length >= 3 && value.length <= 5 && value.every(isNonEmptyString)
+  );
+}
+
+function parseSubtasks(text: string) {
+  const subtasks = readProperty(parseJsonResponse(text), 'subtasks');
+
+  if (!isSubtaskList(subtasks)) {
+    throw new Error('Gemini devolvió subtareas con un formato inválido');
+  }
+
+  return subtasks.map((subtask) => subtask.trim());
+}
+
 export async function generateSubtasks(title: string, description?: string) {
   const client = await getClient();
   const response = await withGeminiRetry(() =>
@@ -75,29 +91,23 @@ export async function generateSubtasks(title: string, description?: string) {
       config: { responseMimeType: 'application/json' },
     }),
   );
-  const result = parseJsonResponse(response.text ?? '');
-
-  if (
-    !result ||
-    typeof result !== 'object' ||
-    !('subtasks' in result) ||
-    !Array.isArray(result.subtasks) ||
-    result.subtasks.length < 3 ||
-    result.subtasks.length > 5 ||
-    !result.subtasks.every((subtask) => typeof subtask === 'string' && subtask.trim().length > 0)
-  ) {
-    throw new Error('Gemini devolvió subtareas con un formato inválido');
-  }
-
-  return result.subtasks.map((subtask) => subtask.trim());
+  return parseSubtasks(response.text ?? '');
 }
 
-export async function generateDailySummary(tasks: Array<{ title: string; description: string | null; priority: string; dueDate: Date | null }>) {
+export async function generateDailySummary(
+  tasks: Array<{
+    title: string;
+    description: string | null;
+    priority: string;
+    dueDate: Date | null;
+  }>,
+) {
   const client = await getClient();
   const taskList = tasks.length
     ? tasks
         .map(
-          (task) => `- ${task.title} | prioridad: ${task.priority} | vence: ${task.dueDate?.toISOString() ?? 'sin fecha'}${task.description ? ` | ${task.description}` : ''}`,
+          (task) =>
+            `- ${task.title} | prioridad: ${task.priority} | vence: ${task.dueDate?.toISOString() ?? 'sin fecha'}${task.description ? ` | ${task.description}` : ''}`,
         )
         .join('\n')
     : 'No hay tareas pendientes.';
