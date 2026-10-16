@@ -17,12 +17,14 @@ declare module 'fastify' {
   }
 }
 
-export async function buildApp() {
-  const app = Fastify({
-    logger: true,
-  });
+export async function buildApp({ logger = true }: { logger?: boolean } = {}) {
+  const app = Fastify({ logger });
 
-  await app.register(fastifyCors, { origin: [env.FRONTEND_URL] });
+  // @fastify/cors v11 solo permite GET, HEAD y POST por defecto; el frontend usa PUT y DELETE.
+  await app.register(fastifyCors, {
+    origin: [env.FRONTEND_URL],
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  });
   await app.register(fastifySwagger, {
     openapi: {
       info: { title: 'TaskMate AI API', version: '1.0.0' },
@@ -83,6 +85,8 @@ async function start() {
 
 if (require.main === module) {
   void start().catch((err) => {
+    // Si buildApp falla (p. ej. variables de entorno inválidas) todavía no existe el logger de Fastify.
+    // eslint-disable-next-line no-console
     console.error(err);
     process.exit(1);
   });

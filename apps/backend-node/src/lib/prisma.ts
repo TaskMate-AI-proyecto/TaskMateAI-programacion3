@@ -2,7 +2,6 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   // Allow storing Prisma client on globalThis in dev to avoid multiple instances
   var __prisma: PrismaClient | undefined;
 }

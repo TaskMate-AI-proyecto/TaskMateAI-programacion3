@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
+import { failure } from '../lib/http';
 import { sendVerificationCode } from '../services/email';
 
 export default async function authRoutes(app: FastifyInstance) {
@@ -8,10 +9,7 @@ export default async function authRoutes(app: FastifyInstance) {
     const bodySchema = z.object({ email: z.string().email() });
     const parseResult = bodySchema.safeParse(request.body);
 
-    if (!parseResult.success) {
-      reply.status(400);
-      return { success: false, message: 'Email inválido' };
-    }
+    if (!parseResult.success) return failure(reply, 400, 'Email inválido');
 
     const { email } = parseResult.data;
 
@@ -43,8 +41,7 @@ export default async function authRoutes(app: FastifyInstance) {
       await sendVerificationCode(email, code);
     } catch (err) {
       app.log.error({ err }, 'Error sending verification email');
-      reply.status(500);
-      return { success: false, message: 'Error enviando el código' };
+      return failure(reply, 500, 'Error enviando el código');
     }
 
     return { success: true, message: 'Código de verificación enviado con éxito' };
@@ -57,10 +54,7 @@ export default async function authRoutes(app: FastifyInstance) {
     });
     const parseResult = bodySchema.safeParse(request.body);
 
-    if (!parseResult.success) {
-      reply.status(400);
-      return { success: false, message: 'Email o código inválido' };
-    }
+    if (!parseResult.success) return failure(reply, 400, 'Email o código inválido');
 
     const { email, code } = parseResult.data;
     const now = new Date();
@@ -87,10 +81,7 @@ export default async function authRoutes(app: FastifyInstance) {
       });
     });
 
-    if (!user) {
-      reply.status(400);
-      return { success: false, message: 'Código inválido o expirado' };
-    }
+    if (!user) return failure(reply, 400, 'Código inválido o expirado');
 
     const token = app.jwt.sign({ id: user.id, email: user.email });
 
