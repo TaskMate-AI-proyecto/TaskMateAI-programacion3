@@ -1,20 +1,18 @@
-from datetime import datetime
-
-from sqlalchemy import Column, DateTime, ForeignKey, String
+from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.orm import relationship
 
-from src.config.database import Base
+from .base import Base, BaseModel
 
 
-class Category(Base):
-    __tablename__ = "categories"
+class Category(Base, BaseModel):
+    """Task category model."""
 
-    id = Column(String, primary_key=True, index=True)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
-    name = Column(String, nullable=False)
-    color = Column(String, default="#6B7280")
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    __tablename__ = "category"
 
+    name = Column(String(255), nullable=False)
+    color = Column(String(7), nullable=True)  # Hex color code
+    user_id = Column(String(36), ForeignKey("user.id"), nullable=False, index=True)
+
+    # Relationships
     user = relationship("User", back_populates="categories")
-    tasks = relationship("Task", back_populates="category", cascade="all, delete-orphan")
+    tasks = relationship("Task", back_populates="category")

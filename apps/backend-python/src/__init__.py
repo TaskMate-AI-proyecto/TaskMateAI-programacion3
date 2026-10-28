@@ -1,3 +1,3 @@
-from src.main import app
+"""TaskMate AI Backend - Python FastAPI Implementation"""
 
-__all__ = ['app']
+__version__ = "0.1.0"

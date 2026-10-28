@@ -2,25 +2,31 @@ from pydantic import BaseModel, EmailStr, Field
 
 
 class SendCodeRequest(BaseModel):
-    email: EmailStr = Field(..., description="User email address")
+    """Send verification code request."""
 
-
-class SendCodeResponse(BaseModel):
-    success: bool = Field(default=True)
-    message: str = Field(..., description="Response message")
+    email: EmailStr
 
 
 class VerifyCodeRequest(BaseModel):
-    email: EmailStr = Field(..., description="User email address")
-    code: str = Field(..., pattern="^\\d{6}$", description="6-digit verification code")
+    """Verify code request."""
+
+    email: EmailStr
+    code: str = Field(..., pattern=r"^\d{6}$")
 
 
 class UserResponse(BaseModel):
-    id: str = Field(..., description="User ID")
-    email: str = Field(..., description="User email")
+    """User response schema."""
+
+    id: str
+    email: str
+
+    class Config:
+        from_attributes = True
 
 
-class VerifyCodeResponse(BaseModel):
-    success: bool = Field(default=True)
-    token: str = Field(..., description="JWT authentication token")
-    user: UserResponse = Field(..., description="User information")
+class AuthResponse(BaseModel):
+    """Authentication response with token."""
+
+    success: bool
+    token: str
+    user: UserResponse

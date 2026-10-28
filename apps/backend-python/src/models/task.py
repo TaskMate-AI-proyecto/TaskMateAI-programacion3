@@ -1,36 +1,41 @@
 from datetime import datetime
-from enum import Enum
 
-from sqlalchemy import Column, DateTime, Enum as SQLEnum, ForeignKey, String, Text
+from sqlalchemy import Column, String, Text, DateTime, Enum, ForeignKey
 from sqlalchemy.orm import relationship
+import enum
 
-from src.config.database import Base
+from .base import Base, BaseModel
 
 
-class TaskStatus(str, Enum):
+class Status(str, enum.Enum):
+    """Task status enum."""
+
     PENDING = "PENDING"
+    IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
 
 
-class TaskPriority(str, Enum):
+class Priority(str, enum.Enum):
+    """Task priority enum."""
+
     LOW = "LOW"
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
 
 
-class Task(Base):
-    __tablename__ = "tasks"
+class Task(Base, BaseModel):
+    """Task model."""
 
-    id = Column(String, primary_key=True, index=True)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
-    category_id = Column(String, ForeignKey("categories.id"), nullable=True)
-    title = Column(String, nullable=False)
+    __tablename__ = "task"
+
+    title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
-    status = Column(SQLEnum(TaskStatus), default=TaskStatus.PENDING)
-    priority = Column(SQLEnum(TaskPriority), default=TaskPriority.MEDIUM)
+    status = Column(Enum(Status), default=Status.PENDING, nullable=False)
+    priority = Column(Enum(Priority), nullable=True)
     due_date = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    user_id = Column(String(36), ForeignKey("user.id"), nullable=False, index=True)
+    category_id = Column(String(36), ForeignKey("category.id"), nullable=True)
 
+    # Relationships
     user = relationship("User", back_populates="tasks")
     category = relationship("Category", back_populates="tasks")
