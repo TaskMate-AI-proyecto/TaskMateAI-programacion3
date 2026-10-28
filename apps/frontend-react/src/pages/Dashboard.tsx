@@ -1,17 +1,35 @@
+import { useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { getApiErrorMessage } from '../api/errors'
-import { getTasks } from '../api/tasksApi'
+import { getTasks, toggleTaskStatus } from '../api/tasksApi'
 import { DailySummaryWidget } from '../components/ai/DailySummaryWidget'
+import { DashboardTaskList, type PriorityFilter } from '../components/dashboard/DashboardTaskList'
 import { MetricCards } from '../components/dashboard/MetricCards'
 import { UpcomingTasks } from '../components/dashboard/UpcomingTasks'
 import { ErrorPanel } from '../components/ui/ErrorPanel'
 import { useAsyncData } from '../hooks/useAsyncData'
+import { useSafeAction } from '../hooks/useSafeAction'
+import type { Task } from '../types/api'
 
 const describeError = (error: unknown) => getApiErrorMessage(error, 'No se pudieron cargar las tareas.')
 
+function replaceTask(list: Task[], updated: Task) {
+  return list.map((item) => (item.id === updated.id ? updated : item))
+}
+
 export function Dashboard() {
-  const { data, error, isLoading, reload } = useAsyncData(() => getTasks(), 'tasks', { describeError })
+  const runSafely = useSafeAction()
+  const { data, error, isLoading, setData, reload } = useAsyncData(() => getTasks(), 'tasks', { describeError })
+  const [priority, setPriority] = useState<PriorityFilter>('ALL')
+  const [pendingId, setPendingId] = useState<string | null>(null)
   const tasks = data ?? []
+
+  async function handleToggle(task: Task) {
+    setPendingId(task.id)
+    const result = await runSafely(() => toggleTaskStatus(task))
+    setPendingId(null)
+    if (result.ok) setData((current) => current && replaceTask(current, result.value))
+  }
 
   return (
     <div className="space-y-8">
@@ -23,6 +41,14 @@ export function Dashboard() {
       {error ? <ErrorPanel message={error} onRetry={reload} /> : (
         <>
           <MetricCards isLoading={isLoading} tasks={tasks} />
+          <DashboardTaskList
+            isLoading={isLoading}
+            onPriorityChange={setPriority}
+            onToggle={(task) => void handleToggle(task)}
+            pendingId={pendingId}
+            priority={priority}
+            tasks={tasks}
+          />
           <UpcomingTasks isLoading={isLoading} tasks={tasks} />
         </>
       )}
