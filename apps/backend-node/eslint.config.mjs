@@ -15,7 +15,9 @@ export default [
       globals: { ...globals.node },
     },
     rules: {
-      'no-console': 'warn',
+      'no-console': 'error',
+      complexity: ['error', 5],
+      '@typescript-eslint/no-explicit-any': 'error',
     },
   },
   {
