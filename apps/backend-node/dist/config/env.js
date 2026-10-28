@@ -13,5 +13,10 @@ const envSchema = zod_1.z.object({
     JWT_SECRET: zod_1.z.string().min(1),
     GEMINI_API_KEY: zod_1.z.string().min(1),
     FRONTEND_URL: zod_1.z.string().url().default('http://localhost:5173'),
+    SMTP_HOST: zod_1.z.string().optional(),
+    SMTP_PORT: zod_1.z.coerce.number().int().positive().default(587),
+    SMTP_USER: zod_1.z.string().optional(),
+    SMTP_PASS: zod_1.z.string().optional(),
+    SMTP_FROM: zod_1.z.string().optional(),
 });
 exports.env = envSchema.parse(process.env);

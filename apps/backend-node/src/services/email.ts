@@ -1,42 +1,35 @@
 import nodemailer from 'nodemailer';
-
-const SMTP_HOST = process.env.SMTP_HOST;
-const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
-const SMTP_USER = process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS;
-const SMTP_FROM = process.env.SMTP_FROM || 'TaskMate AI <no-reply@taskmate.ai>';
-
-const hasSmtp = Boolean(SMTP_HOST && SMTP_USER && SMTP_PASS);
+import { env } from '../config/env';
 
 let transporter: nodemailer.Transporter | null = null;
 
-if (hasSmtp) {
-  transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: SMTP_PORT === 465,
+// Crea el transporte SMTP una sola vez y falla de forma explícita si falta configuración,
+// para no responder "código enviado" cuando en realidad nada salió.
+function getTransporter() {
+  if (!env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASS) {
+    throw new Error('SMTP no está configurado: define SMTP_HOST, SMTP_USER y SMTP_PASS');
+  }
+
+  transporter ??= nodemailer.createTransport({
+    host: env.SMTP_HOST,
+    port: env.SMTP_PORT,
+    secure: env.SMTP_PORT === 465,
     auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
+      user: env.SMTP_USER,
+      pass: env.SMTP_PASS,
     },
   });
+
+  return transporter;
 }
 
 export async function sendVerificationCode(email: string, code: string) {
-  const subject = 'Tu código de verificación - TaskMate AI';
-  const text = `Tu código de verificación es: ${code}. Caduca en 10 minutos.`;
-  const html = `<p>Tu código de verificación es: <strong>${code}</strong></p><p>Caduca en 10 minutos.</p>`;
-
-  if (!hasSmtp || !transporter) {
-    return;
-  }
-
-  await transporter.sendMail({
-    from: SMTP_FROM,
+  await getTransporter().sendMail({
+    from: env.SMTP_FROM || env.SMTP_USER,
     to: email,
-    subject,
-    text,
-    html,
+    subject: 'Tu código de verificación - TaskMate AI',
+    text: `Tu código de verificación es: ${code}. Caduca en 10 minutos.`,
+    html: `<p>Tu código de verificación es: <strong>${code}</strong></p><p>Caduca en 10 minutos.</p>`,
   });
 }
 
