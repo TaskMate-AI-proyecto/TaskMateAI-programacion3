@@ -6,11 +6,13 @@ import { Dashboard } from './pages/Dashboard'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { Tasks } from './pages/Tasks'
+import { Welcome } from './pages/Welcome'
 
 export default function App() {
   return (
     <ToastProvider>
       <Routes>
+        <Route path="/" element={<Welcome />} />
         <Route element={<PublicOnlyRoute />}>
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
@@ -21,8 +23,7 @@ export default function App() {
             <Route path="tasks" element={<Tasks />} />
           </Route>
         </Route>
-        <Route path="/" element={<Navigate replace to="/dashboard" />} />
-        <Route path="*" element={<Navigate replace to="/dashboard" />} />
+        <Route path="*" element={<Navigate replace to="/" />} />
       </Routes>
     </ToastProvider>
   )
