@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 from jose import JWTError, jwt
 from pydantic import BaseModel
@@ -14,7 +14,7 @@ class JWTPayload(BaseModel):
     email: str
 
 
-def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: Dict[str, object], expires_delta: Optional[timedelta] = None) -> str:
     """Create JWT token."""
     to_encode = data.copy()
 

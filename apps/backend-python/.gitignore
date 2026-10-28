@@ -1,0 +1,6 @@
+
+# Credenciales locales: se quedan en disco, nunca en Git.
+.env
+.env.local
+.env.*
+!.env.example
