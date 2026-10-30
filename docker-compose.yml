@@ -41,7 +41,7 @@ services:
       PORT: 3000
       JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env}
       GEMINI_API_KEY: ${GEMINI_API_KEY:?Define GEMINI_API_KEY en .env}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173,http://localhost:5174}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}

@@ -22,7 +22,9 @@ export async function buildApp({ logger = true }: { logger?: boolean } = {}) {
 
   // @fastify/cors v11 solo permite GET, HEAD y POST por defecto; el frontend usa PUT y DELETE.
   await app.register(fastifyCors, {
-    origin: [env.FRONTEND_URL],
+    origin: env.FRONTEND_URL.split(',')
+      .map((url) => url.trim())
+      .filter(Boolean),
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });
   await app.register(fastifySwagger, {
