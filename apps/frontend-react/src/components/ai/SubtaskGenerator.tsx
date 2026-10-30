@@ -40,7 +40,7 @@ export function SubtaskGenerator({ taskId, onAccept }: SubtaskGeneratorProps) {
   }
 
   return (
-    <div className="space-y-3 rounded-md border border-ink/10 bg-white p-4">
+    <div className="space-y-3 rounded-md border border-slate-800 bg-slate-950/40 p-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-medium">Asistente de IA</p>
         <GenerateButton hasSuggestions={suggestions.length > 0} isLoading={isLoading} onClick={() => void generate()} />

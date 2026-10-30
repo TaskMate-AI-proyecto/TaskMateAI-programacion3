@@ -21,7 +21,7 @@ export function GenerateButton({ isLoading, hasSuggestions, onClick }: GenerateB
   const { Icon, motion } = icons[hasSuggestions ? 'regenerate' : 'generate']
 
   return (
-    <button className="inline-flex items-center gap-2 rounded-md border border-ink/15 px-3 py-1.5 text-sm font-semibold transition hover:border-ink/40 disabled:cursor-wait disabled:opacity-60" disabled={isLoading} onClick={onClick} type="button">
+    <button className="inline-flex items-center gap-2 rounded-md border border-slate-700 px-3 py-1.5 text-sm font-semibold text-slate-200 transition hover:border-indigo-500/60 disabled:cursor-wait disabled:opacity-60" disabled={isLoading} onClick={onClick} type="button">
       <Icon className={isLoading ? motion : ''} size={15} />
       {buttonLabel(isLoading, hasSuggestions)}
     </button>
@@ -31,8 +31,8 @@ export function GenerateButton({ isLoading, hasSuggestions, onClick }: GenerateB
 export function GenerationProgress({ message }: { message: string }) {
   return (
     <div aria-busy="true" aria-live="polite" className="space-y-2.5">
-      <p className="text-sm text-ink/60">{message}</p>
-      <div className="animate-pulse space-y-2"><div className="h-8 rounded bg-ink/10" /><div className="h-8 rounded bg-ink/10" /><div className="h-8 w-3/4 rounded bg-ink/10" /></div>
+      <p className="text-sm text-slate-400">{message}</p>
+      <div className="animate-pulse space-y-2"><div className="h-8 rounded bg-slate-800/70" /><div className="h-8 rounded bg-slate-800/70" /><div className="h-8 w-3/4 rounded bg-slate-800/70" /></div>
     </div>
   )
 }

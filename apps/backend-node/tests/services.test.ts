@@ -2,7 +2,7 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { failure, getUserId } from '../src/lib/http';
 import { readProperty } from '../src/lib/objects';
-import { generateDailySummary, generateSubtasks } from '../src/services/gemini';
+import { generateChatReply, generateDailySummary, generateSubtasks } from '../src/services/gemini';
 
 const generateContent = vi.hoisted(() => vi.fn());
 
@@ -90,5 +90,36 @@ describe('services/gemini', () => {
     generateContent.mockResolvedValueOnce({ text: '   ' });
 
     await expect(generateDailySummary([])).rejects.toThrow('resumen vacío');
+  });
+
+  it('generateChatReply envía la conversación y las tareas, y devuelve la respuesta sin espacios', async () => {
+    generateContent.mockResolvedValue({ text: '  Divídela en pasos.  ' });
+
+    await expect(
+      generateChatReply(
+        '¿Cómo empiezo?',
+        [{ role: 'user', text: 'Hola' }],
+        [{ title: 'Entregar', description: null, priority: 'HIGH', dueDate: null }],
+      ),
+    ).resolves.toBe('Divídela en pasos.');
+
+    const prompt = generateContent.mock.calls[0][0].contents as string;
+    expect(prompt).toContain('- Entregar | prioridad: HIGH | vence: sin fecha');
+    expect(prompt).toContain('Usuario: Hola');
+    expect(prompt).toContain('Usuario: ¿Cómo empiezo?');
+  });
+
+  it('generateChatReply omite la conversación previa cuando no existe y falla ante respuestas vacías', async () => {
+    generateContent.mockResolvedValueOnce({ text: 'Hola.' });
+
+    await generateChatReply('Hola', [], []);
+
+    const prompt = generateContent.mock.calls[0][0].contents as string;
+    expect(prompt).not.toContain('Conversación previa');
+    expect(prompt).toContain('No hay tareas pendientes.');
+
+    generateContent.mockResolvedValueOnce({ text: '   ' });
+
+    await expect(generateChatReply('Hola', [], [])).rejects.toThrow('respuesta vacía');
   });
 });

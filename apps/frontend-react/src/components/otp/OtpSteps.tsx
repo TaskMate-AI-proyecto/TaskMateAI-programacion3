@@ -10,9 +10,10 @@ interface SubmitButtonProps {
   disabled?: boolean
 }
 
+// Botón principal en degradado índigo/violeta con brillo al pasar el cursor.
 function SubmitButton({ isBusy, busyLabel, label, disabled = false }: SubmitButtonProps) {
   return (
-    <button className="command-button w-full justify-center" disabled={isBusy || disabled} type="submit">
+    <button className="command-button w-full justify-center rounded-2xl py-3 hover:shadow-[0_0_28px_-6px_rgba(139,92,246,0.75)] disabled:opacity-60" disabled={isBusy || disabled} type="submit">
       {isBusy ? busyLabel : label}<ArrowRight size={18} />
     </button>
   )
@@ -32,7 +33,7 @@ export function OtpEmailStep({ isRegister, name, email, isSubmitting, onNameChan
   return (
     <form className="space-y-4" onSubmit={onSubmit}>
       {isRegister && (
-        <label className="block text-sm font-medium">Nombre
+        <label className="block text-sm font-medium text-slate-300">Nombre
           <input autoComplete="name" className={fieldClass} onChange={(event) => onNameChange(event.target.value)} required value={name} />
         </label>
       )}

@@ -8,9 +8,9 @@ export const statusLabels: Record<TaskStatus, string> = {
 }
 
 export const statusStyles: Record<TaskStatus, string> = {
-  PENDING: 'bg-ink/10 text-ink/70',
-  IN_PROGRESS: 'bg-sky-100 text-sky-800',
-  COMPLETED: 'bg-mint/15 text-mint',
+  PENDING: 'bg-slate-800 text-slate-300',
+  IN_PROGRESS: 'bg-sky-500/15 text-sky-300',
+  COMPLETED: 'bg-emerald-500/15 text-emerald-300',
 }
 
 export const statusFilterLabels: Record<TaskStatus, string> = {
@@ -26,9 +26,9 @@ export const priorityLabels: Record<TaskPriority, string> = {
 }
 
 export const priorityStyles: Record<TaskPriority, string> = {
-  LOW: 'bg-mint/15 text-mint',
-  MEDIUM: 'bg-amber-100 text-amber-800',
-  HIGH: 'bg-coral/15 text-coral',
+  LOW: 'bg-emerald-500/15 text-emerald-300',
+  MEDIUM: 'bg-amber-500/15 text-amber-300',
+  HIGH: 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-[0_0_14px_-4px_rgba(139,92,246,0.7)]',
 }
 
 export interface TaskFilterState {
