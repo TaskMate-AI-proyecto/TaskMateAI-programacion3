@@ -15,7 +15,7 @@ export function TaskFilters({ filters, categories, onChange }: TaskFiltersProps)
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
       <label className="relative block">
         <span className="sr-only">Buscar tareas</span>
-        <Search className="absolute left-3 top-1/2 mt-[3px] -translate-y-1/2 text-ink/45" size={16} />
+        <Search className="absolute left-3 top-1/2 mt-[3px] -translate-y-1/2 text-slate-500" size={16} />
         <input className={`${fieldClass} !mt-0 pl-9`} onChange={(event) => onChange({ search: event.target.value })} placeholder="Buscar por título o descripción" type="search" value={filters.search} />
       </label>
       <SelectField hideLabel label="Estado" onChange={(status) => onChange({ status })} options={statusFilterOptions} value={filters.status} />

@@ -16,5 +16,13 @@ export default defineConfig({
       SMTP_PASS: '',
     },
     mockReset: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'cobertura'],
+      reportsDirectory: './coverage',
+      // Solo código fuente de la API: tests, tipos y el arranque por consola quedan fuera del conteo.
+      include: ['src/**/*.ts'],
+      exclude: ['src/**/*.d.ts'],
+    },
   },
 });

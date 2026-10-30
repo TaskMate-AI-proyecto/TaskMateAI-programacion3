@@ -63,3 +63,13 @@ export interface AiSummaryResponse {
   success: true
   summary: string
 }
+
+export interface AiChatTurn {
+  role: 'user' | 'assistant'
+  text: string
+}
+
+export interface AiChatResponse {
+  success: true
+  reply: string
+}

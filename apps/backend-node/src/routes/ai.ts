@@ -4,12 +4,35 @@ import { z } from 'zod';
 import { failure, getUserId } from '../lib/http';
 import { readProperty } from '../lib/objects';
 import prisma from '../lib/prisma';
-import { generateDailySummary, generateSubtasks } from '../services/gemini';
+import { generateChatReply, generateDailySummary, generateSubtasks } from '../services/gemini';
 
 const generateSubtasksSchema = z.object({
   title: z.string().trim().min(1),
   description: z.string().trim().min(1).optional(),
 });
+
+const chatSchema = z.object({
+  message: z.string().trim().min(1).max(2000),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant']),
+        text: z.string().trim().min(1).max(2000),
+      }),
+    )
+    .max(20)
+    .optional(),
+});
+
+// Tareas pendientes del usuario: contexto para el resumen y para el chat.
+function findPendingTasks(userId: string) {
+  return prisma.task.findMany({
+    where: { userId, status: { not: Status.COMPLETED } },
+    select: { title: true, description: true, priority: true, dueDate: true },
+    orderBy: { dueDate: 'asc' },
+    take: 50,
+  });
+}
 
 type GeminiFailure = { statusCode: number; message: string };
 
@@ -78,17 +101,32 @@ export default async function aiRoutes(app: FastifyInstance) {
   );
 
   app.post('/api/ai/summarize', { preHandler: app.authenticate }, async (request, reply) => {
-    const tasks = await prisma.task.findMany({
-      where: { userId: getUserId(request), status: { not: Status.COMPLETED } },
-      select: { title: true, description: true, priority: true, dueDate: true },
-      orderBy: { dueDate: 'asc' },
-    });
+    const tasks = await findPendingTasks(getUserId(request));
 
     try {
       const summary = await generateDailySummary(tasks);
       return { success: true, summary };
     } catch (err) {
       return replyGeminiFailure(app, reply, err, 'Error generating daily summary with Gemini');
+    }
+  });
+
+  app.post('/api/ai/chat', { preHandler: app.authenticate }, async (request, reply) => {
+    const bodyResult = chatSchema.safeParse(request.body);
+
+    if (!bodyResult.success) return failure(reply, 400, 'Mensaje inválido');
+
+    const tasks = await findPendingTasks(getUserId(request));
+
+    try {
+      const answer = await generateChatReply(
+        bodyResult.data.message,
+        bodyResult.data.history ?? [],
+        tasks,
+      );
+      return { success: true, reply: answer };
+    } catch (err) {
+      return replyGeminiFailure(app, reply, err, 'Error generating chat reply with Gemini');
     }
   });
 }

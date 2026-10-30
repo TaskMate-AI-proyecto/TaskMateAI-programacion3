@@ -1,7 +1,7 @@
 from typing import Dict, Tuple
 
 
-def failure(status_code: int, message: str) -> Dict[str, any]:
+def failure(status_code: int, message: str) -> Dict[str, object]:
     """Create failure response."""
     return {"success": False, "message": message}
 

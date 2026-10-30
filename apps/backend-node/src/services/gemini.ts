@@ -94,27 +94,35 @@ export async function generateSubtasks(title: string, description?: string) {
   return parseSubtasks(response.text ?? '');
 }
 
-export async function generateDailySummary(
-  tasks: Array<{
-    title: string;
-    description: string | null;
-    priority: string;
-    dueDate: Date | null;
-  }>,
-) {
+export interface PendingTask {
+  title: string;
+  description: string | null;
+  priority: string;
+  dueDate: Date | null;
+}
+
+export interface ChatTurn {
+  role: 'user' | 'assistant';
+  text: string;
+}
+
+function formatPendingTasks(tasks: PendingTask[]) {
+  if (tasks.length === 0) return 'No hay tareas pendientes.';
+
+  return tasks
+    .map(
+      (task) =>
+        `- ${task.title} | prioridad: ${task.priority} | vence: ${task.dueDate?.toISOString() ?? 'sin fecha'}${task.description ? ` | ${task.description}` : ''}`,
+    )
+    .join('\n');
+}
+
+export async function generateDailySummary(tasks: PendingTask[]) {
   const client = await getClient();
-  const taskList = tasks.length
-    ? tasks
-        .map(
-          (task) =>
-            `- ${task.title} | prioridad: ${task.priority} | vence: ${task.dueDate?.toISOString() ?? 'sin fecha'}${task.description ? ` | ${task.description}` : ''}`,
-        )
-        .join('\n')
-    : 'No hay tareas pendientes.';
   const response = await withGeminiRetry(() =>
     client.models.generateContent({
       model,
-      contents: `Elabora un resumen diario breve y accionable en español, priorizando las tareas urgentes. No uses Markdown.\nTareas pendientes:\n${taskList}`,
+      contents: `Elabora un resumen diario breve y accionable en español, priorizando las tareas urgentes. No uses Markdown.\nTareas pendientes:\n${formatPendingTasks(tasks)}`,
     }),
   );
   const summary = response.text?.trim();
@@ -124,4 +132,36 @@ export async function generateDailySummary(
   }
 
   return summary;
+}
+
+// Respuesta de la conversación con el asistente, con las tareas pendientes como contexto.
+export async function generateChatReply(
+  message: string,
+  history: ChatTurn[],
+  tasks: PendingTask[],
+) {
+  const client = await getClient();
+  const transcript = history
+    .map((turn) => `${turn.role === 'user' ? 'Usuario' : 'Asistente'}: ${turn.text}`)
+    .join('\n');
+  const response = await withGeminiRetry(() =>
+    client.models.generateContent({
+      model,
+      contents: [
+        'Eres TaskMate AI, un asistente de gestión de tareas. Responde en español, de forma breve y accionable, sin Markdown.',
+        `Tareas pendientes del usuario:\n${formatPendingTasks(tasks)}`,
+        transcript ? `Conversación previa:\n${transcript}` : '',
+        `Usuario: ${message}\nAsistente:`,
+      ]
+        .filter(Boolean)
+        .join('\n\n'),
+    }),
+  );
+  const reply = response.text?.trim();
+
+  if (!reply) {
+    throw new Error('Gemini devolvió una respuesta vacía');
+  }
+
+  return reply;
 }

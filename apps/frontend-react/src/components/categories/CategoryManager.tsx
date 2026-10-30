@@ -17,7 +17,7 @@ interface CategoryManagerProps {
 
 const palette = ['#EF6F5E', '#4B9B84', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6', '#6B7280']
 const defaultColor = palette[0].toLowerCase()
-const rowActionClass = 'inline-grid h-8 w-8 place-items-center rounded-md text-ink/60 hover:bg-ink/5'
+const rowActionClass = 'inline-grid h-8 w-8 place-items-center rounded-md text-slate-400 hover:bg-slate-800 hover:text-slate-100'
 
 function toCategoryForm(editing: Category | null): Required<CategoryInput> {
   if (!editing) return { name: '', color: defaultColor }
@@ -42,7 +42,7 @@ function CategoryRow({ category, isBusy, onEdit, onDelete }: CategoryRowProps) {
   const [confirming, setConfirming] = useState(false)
 
   return (
-    <li className="flex items-center gap-3 rounded-md border border-ink/10 bg-white px-3 py-2">
+    <li className="glass-card flex items-center gap-3 px-3 py-2">
       <span aria-hidden className="h-4 w-4 shrink-0 rounded-full" style={{ backgroundColor: category.color }} />
       <span className="min-w-0 flex-1 truncate text-sm font-medium">{category.name}</span>
       {confirming ? <ConfirmDelete isBusy={isBusy} onCancel={() => setConfirming(false)} onConfirm={() => onDelete(category)} /> : (
@@ -66,19 +66,19 @@ function CategoryForm({ editing, isSaving, onSubmit, onCancel }: CategoryFormPro
   const [values, setValues] = useState(() => toCategoryForm(editing))
 
   return (
-    <form className="space-y-3 border-t border-ink/10 pt-4" onSubmit={(event) => { event.preventDefault(); onSubmit({ name: values.name.trim(), color: values.color }) }}>
+    <form className="space-y-3 border-t border-slate-800 pt-4" onSubmit={(event) => { event.preventDefault(); onSubmit({ name: values.name.trim(), color: values.color }) }}>
       <h3 className="text-sm font-semibold">{editing ? 'Editar categoría' : 'Nueva categoría'}</h3>
       <label className="block text-sm font-medium">Nombre
         <input className={fieldClass} maxLength={40} onChange={(event) => setValues({ ...values, name: event.target.value })} required value={values.name} />
       </label>
       <div className="flex flex-wrap items-center gap-2">
         {palette.map((swatch) => (
-          <button aria-label={`Color ${swatch}`} aria-pressed={values.color === swatch.toLowerCase()} className={`h-7 w-7 rounded-full border-2 ${values.color === swatch.toLowerCase() ? 'border-ink' : 'border-transparent'}`} key={swatch} onClick={() => setValues({ ...values, color: swatch.toLowerCase() })} style={{ backgroundColor: swatch }} type="button" />
+          <button aria-label={`Color ${swatch}`} aria-pressed={values.color === swatch.toLowerCase()} className={`h-7 w-7 rounded-full border-2 ${values.color === swatch.toLowerCase() ? 'border-slate-100' : 'border-transparent'}`} key={swatch} onClick={() => setValues({ ...values, color: swatch.toLowerCase() })} style={{ backgroundColor: swatch }} type="button" />
         ))}
-        <input aria-label="Color personalizado" className="h-7 w-10 cursor-pointer rounded border border-ink/20 bg-white" onChange={(event) => setValues({ ...values, color: event.target.value })} type="color" value={values.color} />
+        <input aria-label="Color personalizado" className="h-7 w-10 cursor-pointer rounded border border-slate-700 bg-slate-950" onChange={(event) => setValues({ ...values, color: event.target.value })} type="color" value={values.color} />
       </div>
       <div className="flex justify-end gap-2">
-        {editing && <button className="rounded-md px-4 py-2 text-sm font-medium text-ink/70 hover:bg-ink/5" onClick={onCancel} type="button">Cancelar edición</button>}
+        {editing && <button className="rounded-md px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800" onClick={onCancel} type="button">Cancelar edición</button>}
         <button className="command-button disabled:opacity-60" disabled={isSaving || !values.name.trim()} type="submit">{submitLabel(isSaving, editing !== null)}</button>
       </div>
     </form>

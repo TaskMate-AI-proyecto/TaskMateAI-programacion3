@@ -19,9 +19,9 @@ export function TaskList({ tasks, isLoading, hasFilters, pendingId, onCreate, on
     return (
       <ul aria-busy="true" aria-label="Cargando tareas" className="space-y-3">
         {[0, 1, 2].map((item) => (
-          <li className="flex animate-pulse gap-3 rounded-md border border-ink/10 bg-white p-4" key={item}>
-            <div className="h-6 w-6 rounded-full bg-ink/10" />
-            <div className="flex-1 space-y-2.5"><div className="h-4 w-1/3 rounded bg-ink/10" /><div className="h-3 w-3/4 rounded bg-ink/10" /><div className="h-3 w-1/4 rounded bg-ink/10" /></div>
+          <li className="glass-card flex animate-pulse gap-3 p-4" key={item}>
+            <div className="h-6 w-6 rounded-full bg-slate-800/70" />
+            <div className="flex-1 space-y-2.5"><div className="h-4 w-1/3 rounded bg-slate-800/70" /><div className="h-3 w-3/4 rounded bg-slate-800/70" /><div className="h-3 w-1/4 rounded bg-slate-800/70" /></div>
           </li>
         ))}
       </ul>

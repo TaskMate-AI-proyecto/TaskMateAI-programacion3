@@ -58,19 +58,13 @@ describe('TaskCard', () => {
     expect(onEdit).toHaveBeenCalledWith(task)
   })
 
-  it('pide confirmación antes de eliminar y permite cancelar', async () => {
+  it('delega la eliminación al padre, que muestra la confirmación en un modal', async () => {
     const { onDelete, task, user } = renderCard()
 
     await user.click(screen.getByRole('button', { name: 'Eliminar Preparar parcial' }))
-    expect(screen.getByText('¿Eliminar?')).toBeInTheDocument()
-    expect(onDelete).not.toHaveBeenCalled()
 
-    await user.click(screen.getByRole('button', { name: 'No' }))
-    expect(screen.queryByText('¿Eliminar?')).not.toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: 'Eliminar Preparar parcial' }))
-    await user.click(screen.getByRole('button', { name: 'Sí' }))
     expect(onDelete).toHaveBeenCalledWith(task)
+    expect(screen.queryByText('¿Eliminar?')).not.toBeInTheDocument()
   })
 
   it('deshabilita las acciones mientras está ocupada', () => {

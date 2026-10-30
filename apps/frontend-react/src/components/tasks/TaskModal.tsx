@@ -48,7 +48,7 @@ export function TaskModal({ task, categories, isSaving, onSubmit, onClose }: Tas
           </label>
         </div>
         <div className="flex justify-end gap-2 pt-2">
-          <button className="rounded-md px-4 py-2 text-sm font-medium text-ink/70 hover:bg-ink/5" onClick={onClose} type="button">Cancelar</button>
+          <button className="rounded-md px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800" onClick={onClose} type="button">Cancelar</button>
           <button className="command-button disabled:opacity-60" disabled={isSaving || !values.title.trim()} type="submit">{submitLabel(isSaving, task !== null)}</button>
         </div>
       </form>

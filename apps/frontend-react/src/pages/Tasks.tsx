@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { Plus, Tags } from 'lucide-react'
 import { deleteTask, createTask, toggleTaskStatus, updateTask } from '../api/tasksApi'
-import { CategoryManager } from '../components/categories/CategoryManager'
+import { TaskDialogs, type TaskDialog } from '../components/tasks/TaskDialogs'
 import { TaskFilters } from '../components/tasks/TaskFilters'
 import { TaskList } from '../components/tasks/TaskList'
-import { TaskModal } from '../components/tasks/TaskModal'
 import { emptyFilters, filterTasks, hasActiveFilters, type TaskFilterState } from '../components/tasks/taskUtils'
 import { ErrorPanel } from '../components/ui/ErrorPanel'
 import { useSafeAction } from '../hooks/useSafeAction'
@@ -20,12 +19,15 @@ function replaceTask(list: Task[], updated: Task) {
   return list.map((item) => (item.id === updated.id ? updated : item))
 }
 
+function editingTask(dialog: TaskDialog) {
+  return dialog?.kind === 'form' ? dialog.task : null
+}
+
 export function Tasks() {
   const { notify } = useToast()
   const runSafely = useSafeAction()
   const [filters, setFilters] = useState<TaskFilterState>(emptyFilters)
-  const [modal, setModal] = useState<{ task: Task | null } | null>(null)
-  const [showCategories, setShowCategories] = useState(false)
+  const [dialog, setDialog] = useState<TaskDialog>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [pendingId, setPendingId] = useState<string | null>(null)
 
@@ -38,16 +40,19 @@ export function Tasks() {
     return result
   }
 
+  // Con un filtro de categoría la tarea guardada puede dejar de pertenecer a la lista: se vuelve a pedir.
+  // Sin filtro se actualiza el estado local con la respuesta de la API, sin recargar.
   async function handleSave(input: TaskInput) {
-    const editing = modal?.task ?? null
+    const editing = editingTask(dialog)
     setIsSaving(true)
     const result = await runSafely(() => saveTask(editing, input))
-    if (result.ok) {
-      notify(editing ? 'Tarea actualizada' : 'Tarea creada')
-      setModal(null)
-      refresh()
-    }
     setIsSaving(false)
+    if (!result.ok) return
+
+    notify(editing ? 'Tarea actualizada' : 'Tarea creada')
+    setDialog(null)
+    if (filters.categoryId) refresh()
+    else updateTasks((list) => (editing ? replaceTask(list, result.value) : [result.value, ...list]))
   }
 
   async function handleToggle(task: Task) {
@@ -58,6 +63,8 @@ export function Tasks() {
   async function handleDelete(task: Task) {
     const result = await runForTask(task, () => deleteTask(task.id))
     if (!result.ok) return
+
+    setDialog(null)
     updateTasks((list) => list.filter((item) => item.id !== task.id))
     notify('Tarea eliminada')
   }
@@ -67,8 +74,8 @@ export function Tasks() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div><p className="eyebrow">Tareas</p><h1 className="font-display text-4xl font-semibold">Tu lista de trabajo.</h1></div>
         <div className="flex gap-2">
-          <button className="inline-flex items-center gap-2 rounded-md border border-ink/15 bg-white px-4 py-2 text-sm font-semibold hover:border-ink/40" onClick={() => setShowCategories(true)} type="button"><Tags size={16} />Categorías</button>
-          <button className="command-button" onClick={() => setModal({ task: null })} type="button"><Plus size={16} />Nueva tarea</button>
+          <button className="inline-flex items-center gap-2 rounded-md border border-slate-700 bg-slate-900/60 px-4 py-2 text-sm font-semibold text-slate-100 backdrop-blur-md hover:border-indigo-500/60" onClick={() => setDialog({ kind: 'categories' })} type="button"><Tags size={16} />Categorías</button>
+          <button className="command-button" onClick={() => setDialog({ kind: 'form', task: null })} type="button"><Plus size={16} />Nueva tarea</button>
         </div>
       </div>
       <TaskFilters categories={categories} filters={filters} onChange={(changes) => setFilters((current) => ({ ...current, ...changes }))} />
@@ -77,16 +84,24 @@ export function Tasks() {
           hasFilters={hasActiveFilters(filters)}
           isLoading={isLoading}
           onClearFilters={() => setFilters(emptyFilters)}
-          onCreate={() => setModal({ task: null })}
-          onDelete={(task) => void handleDelete(task)}
-          onEdit={(task) => setModal({ task })}
+          onCreate={() => setDialog({ kind: 'form', task: null })}
+          onDelete={(task) => setDialog({ kind: 'delete', task })}
+          onEdit={(task) => setDialog({ kind: 'form', task })}
           onToggle={(task) => void handleToggle(task)}
           pendingId={pendingId}
           tasks={filterTasks(tasks, filters)}
         />
       )}
-      {modal && <TaskModal categories={categories} isSaving={isSaving} onClose={() => setModal(null)} onSubmit={(input) => void handleSave(input)} task={modal.task} />}
-      {showCategories && <CategoryManager categories={categories} onChanged={refresh} onClose={() => setShowCategories(false)} />}
+      <TaskDialogs
+        categories={categories}
+        dialog={dialog}
+        isSaving={isSaving}
+        onCategoriesChanged={refresh}
+        onClose={() => setDialog(null)}
+        onDelete={(task) => void handleDelete(task)}
+        onSave={(input) => void handleSave(input)}
+        pendingId={pendingId}
+      />
     </div>
   )
 }

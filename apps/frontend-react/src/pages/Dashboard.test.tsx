@@ -3,9 +3,10 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getDailySummary } from '../api/aiApi'
+import { getCategories } from '../api/categoriesApi'
 import { getTasks, toggleTaskStatus } from '../api/tasksApi'
 import { ToastProvider } from '../context/ToastProvider'
-import type { Task } from '../types/api'
+import type { Category, Task } from '../types/api'
 import { Dashboard } from './Dashboard'
 
 vi.mock('../api/tasksApi', () => ({
@@ -13,6 +14,7 @@ vi.mock('../api/tasksApi', () => ({
   toggleTaskStatus: vi.fn(),
 }))
 vi.mock('../api/aiApi', () => ({ getDailySummary: vi.fn() }))
+vi.mock('../api/categoriesApi', () => ({ getCategories: vi.fn() }))
 
 const getTasksMock = vi.mocked(getTasks)
 const toggleTaskStatusMock = vi.mocked(toggleTaskStatus)
@@ -45,6 +47,7 @@ async function getTaskList() {
 
 describe('Dashboard tasks', () => {
   beforeEach(() => {
+    vi.mocked(getCategories).mockResolvedValue([])
     getTasksMock.mockResolvedValue(tasks)
     vi.mocked(getDailySummary).mockResolvedValue('Resumen de prueba')
   })
@@ -132,5 +135,44 @@ describe('Dashboard tasks', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Marcar Preparar parcial como pendiente' })).toBeInTheDocument())
     expect(within(list).getAllByRole('listitem')).toHaveLength(1)
     expect(screen.getByRole('button', { name: 'Alta' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('muestra la productividad por prioridad y el porcentaje completado', async () => {
+    getTasksMock.mockResolvedValue([
+      makeTask({ id: 'a', title: 'Hecha', priority: 'HIGH', status: 'COMPLETED' }),
+      makeTask({ id: 'b', title: 'Pendiente', priority: 'HIGH' }),
+    ])
+    renderDashboard()
+
+    expect(await screen.findByText('50% completadas')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /Alta: 1 de 2 completadas/ })).toBeInTheDocument()
+  })
+
+  it('muestra cada categoría como tile con sus tareas pendientes y enlace a tareas', async () => {
+    const categories: Category[] = [{ id: 'c1', name: 'Facultad', color: '#22c55e' }]
+    vi.mocked(getCategories).mockResolvedValue(categories)
+    getTasksMock.mockResolvedValue([
+      makeTask({ id: 'x', title: 'Parcial', priority: 'HIGH', categoryId: 'c1' }),
+      makeTask({ id: 'y', title: 'Estudio', priority: 'LOW', categoryId: 'c1', status: 'COMPLETED' }),
+    ])
+    renderDashboard()
+
+    const tile = await screen.findByRole('link', { name: /Facultad/ })
+    expect(tile).toHaveAttribute('href', '/tasks')
+    expect(within(tile).getByText('1 pendientes')).toBeInTheDocument()
+  })
+
+  it('invita a crear categorías cuando no hay ninguna', async () => {
+    renderDashboard()
+
+    expect(await screen.findByText('Aún no tienes categorías. Créalas desde Tareas.')).toBeInTheDocument()
+  })
+
+  it('avisa si no se pueden cargar las categorías sin ocultar el resto del dashboard', async () => {
+    vi.mocked(getCategories).mockRejectedValue(new Error('caído'))
+    renderDashboard()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudieron cargar las categorías.')
+    expect(screen.getByRole('list', { name: 'Lista de tareas' })).toBeInTheDocument()
   })
 })
