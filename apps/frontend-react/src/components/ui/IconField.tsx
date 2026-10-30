@@ -1,6 +1,6 @@
 import type { InputHTMLAttributes } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { cn } from '../../lib/cn'
+import { cn } from '../../utils/cn'
 
 interface IconFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string

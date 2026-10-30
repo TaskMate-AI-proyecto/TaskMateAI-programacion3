@@ -134,11 +134,36 @@ export async function generateDailySummary(tasks: PendingTask[]) {
   return summary;
 }
 
-// Respuesta de la conversación con el asistente, con las tareas pendientes como contexto.
+export interface ChatContextTask extends PendingTask {
+  id: string;
+}
+
+// Los ids van en la lista para que el modelo pueda referirse a una tarea existente al modificarla o borrarla.
+function formatChatTasks(tasks: ChatContextTask[]) {
+  if (tasks.length === 0) return 'No hay tareas pendientes.';
+
+  return tasks
+    .map(
+      (task) =>
+        `- [${task.id}] ${task.title} | prioridad: ${task.priority} | vence: ${task.dueDate?.toISOString() ?? 'sin fecha'}`,
+    )
+    .join('\n');
+}
+
+const chatInstructions = [
+  'Eres TaskMate AI, un asistente de gestión de tareas. Responde en español, de forma breve y accionable, sin Markdown.',
+  'Si el usuario pide crear, modificar o eliminar tareas, agrega al final un bloque por cada acción, con este formato exacto:',
+  '[COMMAND]{"action":"CREATE_TASK","title":"...","description":"...","priority":"LOW|MEDIUM|HIGH","dueDate":"YYYY-MM-DD"}[/COMMAND]',
+  '[COMMAND]{"action":"UPDATE_TASK","id":"<id de la lista>","status":"PENDING|COMPLETED","priority":"LOW|MEDIUM|HIGH","title":"..."}[/COMMAND]',
+  '[COMMAND]{"action":"DELETE_TASK","id":"<id de la lista>"}[/COMMAND]',
+  'Usa para UPDATE_TASK y DELETE_TASK sólo ids que aparezcan en la lista de tareas.',
+].join('\n');
+
+// Respuesta de la conversación. Devuelve el texto crudo: los bloques [COMMAND] los interpreta el backend.
 export async function generateChatReply(
   message: string,
   history: ChatTurn[],
-  tasks: PendingTask[],
+  tasks: ChatContextTask[],
 ) {
   const client = await getClient();
   const transcript = history
@@ -148,8 +173,8 @@ export async function generateChatReply(
     client.models.generateContent({
       model,
       contents: [
-        'Eres TaskMate AI, un asistente de gestión de tareas. Responde en español, de forma breve y accionable, sin Markdown.',
-        `Tareas pendientes del usuario:\n${formatPendingTasks(tasks)}`,
+        chatInstructions,
+        `Tareas pendientes del usuario:\n${formatChatTasks(tasks)}`,
         transcript ? `Conversación previa:\n${transcript}` : '',
         `Usuario: ${message}\nAsistente:`,
       ]

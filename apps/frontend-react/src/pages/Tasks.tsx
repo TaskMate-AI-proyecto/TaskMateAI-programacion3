@@ -8,6 +8,7 @@ import { emptyFilters, filterTasks, hasActiveFilters, type TaskFilterState } fro
 import { ErrorPanel } from '../components/ui/ErrorPanel'
 import { useSafeAction } from '../hooks/useSafeAction'
 import { useTasksData } from '../hooks/useTasksData'
+import { useRefreshOnTaskChanges } from '../hooks/useTaskSync'
 import { useToast } from '../hooks/useToast'
 import type { Task, TaskInput } from '../types/api'
 
@@ -32,6 +33,8 @@ export function Tasks() {
   const [pendingId, setPendingId] = useState<string | null>(null)
 
   const { tasks, categories, error, isLoading, updateTasks, refresh, reload } = useTasksData(filters.categoryId)
+  // Si el asistente cambia tareas mientras esta vista está abierta, el listado se vuelve a pedir.
+  useRefreshOnTaskChanges(refresh)
 
   async function runForTask<T>(task: Task, action: () => Promise<T>) {
     setPendingId(task.id)

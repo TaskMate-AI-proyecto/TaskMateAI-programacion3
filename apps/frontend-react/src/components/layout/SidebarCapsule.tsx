@@ -1,6 +1,6 @@
 import { Bot, Home, ListTodo, Settings } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
-import { cn } from '../../lib/cn'
+import { cn } from '../../utils/cn'
 
 const navigation = [
   { label: 'Inicio', to: '/dashboard', icon: Home },

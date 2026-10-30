@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { failure, getUserId } from '../lib/http';
 import { readProperty } from '../lib/objects';
 import prisma from '../lib/prisma';
+import { applyChatCommands, extractChatCommands } from '../services/chatCommands';
 import { generateChatReply, generateDailySummary, generateSubtasks } from '../services/gemini';
 
 const generateSubtasksSchema = z.object({
@@ -24,11 +25,11 @@ const chatSchema = z.object({
     .optional(),
 });
 
-// Tareas pendientes del usuario: contexto para el resumen y para el chat.
+// Tareas pendientes del usuario: contexto para el resumen y para el chat (el chat necesita el id).
 function findPendingTasks(userId: string) {
   return prisma.task.findMany({
     where: { userId, status: { not: Status.COMPLETED } },
-    select: { title: true, description: true, priority: true, dueDate: true },
+    select: { id: true, title: true, description: true, priority: true, dueDate: true },
     orderBy: { dueDate: 'asc' },
     take: 50,
   });
@@ -116,17 +117,25 @@ export default async function aiRoutes(app: FastifyInstance) {
 
     if (!bodyResult.success) return failure(reply, 400, 'Mensaje inválido');
 
-    const tasks = await findPendingTasks(getUserId(request));
+    const userId = getUserId(request);
+    const tasks = await findPendingTasks(userId);
 
+    let answer: string;
     try {
-      const answer = await generateChatReply(
+      answer = await generateChatReply(
         bodyResult.data.message,
         bodyResult.data.history ?? [],
         tasks,
       );
-      return { success: true, reply: answer };
     } catch (err) {
       return replyGeminiFailure(app, reply, err, 'Error generating chat reply with Gemini');
     }
+
+    // Los comandos de la respuesta se ejecutan aquí, con los permisos del usuario, y se devuelven los cambios
+    // para que el frontend refresque el listado de tareas sin recargar la página.
+    const { reply: text, commands } = extractChatCommands(answer);
+    const changes = await applyChatCommands(commands, userId);
+
+    return { success: true, reply: text, changes };
   });
 }

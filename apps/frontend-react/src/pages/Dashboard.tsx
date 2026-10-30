@@ -12,6 +12,7 @@ import { UpcomingTasks } from '../components/dashboard/UpcomingTasks'
 import { ErrorPanel } from '../components/ui/ErrorPanel'
 import { useAsyncData } from '../hooks/useAsyncData'
 import { useSafeAction } from '../hooks/useSafeAction'
+import { useRefreshOnTaskChanges } from '../hooks/useTaskSync'
 import type { Task } from '../types/api'
 
 const describeError = (error: unknown) => getApiErrorMessage(error, 'No se pudieron cargar las tareas.')
@@ -23,11 +24,13 @@ function replaceTask(list: Task[], updated: Task) {
 
 export function Dashboard() {
   const runSafely = useSafeAction()
-  const { data, error, isLoading, setData, reload } = useAsyncData(() => getTasks(), 'tasks', { describeError })
+  const { data, error, isLoading, setData, refresh, reload } = useAsyncData(() => getTasks(), 'tasks', { describeError })
   const categories = useAsyncData(() => getCategories(), 'dashboard-categories', { describeError: describeCategoriesError })
   const [priority, setPriority] = useState<PriorityFilter>('ALL')
   const [pendingId, setPendingId] = useState<string | null>(null)
   const tasks = data ?? []
+  // Si el asistente crea, edita o borra tareas, el listado se vuelve a pedir sin recargar la página.
+  useRefreshOnTaskChanges(refresh)
 
   async function handleToggle(task: Task) {
     setPendingId(task.id)

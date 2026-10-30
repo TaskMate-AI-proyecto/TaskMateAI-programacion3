@@ -3,6 +3,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { failure, getUserId } from '../lib/http';
+import { taskSelect } from '../lib/taskSelect';
 
 const taskIdSchema = z.object({ id: z.string().min(1) });
 const taskDataSchema = z.object({
@@ -20,17 +21,6 @@ const taskQuerySchema = z.object({
   categoryId: z.string().min(1).optional(),
   completed: z.enum(['true', 'false']).optional(),
 });
-
-const taskSelect = {
-  id: true,
-  title: true,
-  description: true,
-  status: true,
-  priority: true,
-  dueDate: true,
-  categoryId: true,
-  category: { select: { id: true, name: true, color: true } },
-} as const;
 
 function toStatusFilter(completed: 'true' | 'false' | undefined) {
   if (completed === undefined) return undefined;
