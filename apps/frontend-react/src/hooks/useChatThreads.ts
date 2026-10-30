@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react'
 import { sendChatMessage } from '../api/aiApi'
 import { getAiErrorMessage } from '../api/errors'
-import type { AiChatTurn } from '../types/api'
+import type { AiChatTurn, AiTaskChanges } from '../types/api'
 import { useSafeAction } from './useSafeAction'
+import { useTaskSync } from './useTaskSync'
+import { useToast } from './useToast'
+
+function hasTaskChanges(changes: AiTaskChanges) {
+  return changes.created.length > 0 || changes.updated.length > 0 || changes.deletedIds.length > 0
+}
 
 export interface ChatMessage {
   id: string
@@ -79,6 +85,8 @@ function matchesSearch(thread: ChatThread, query: string) {
 
 export function useChatThreads() {
   const runSafely = useSafeAction()
+  const { notifyTasksChanged } = useTaskSync()
+  const { notify } = useToast()
   const [threads, setThreads] = useState<ChatThread[]>(readThreads)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
@@ -136,7 +144,18 @@ export function useChatThreads() {
     const result = await runSafely(() => sendChatMessage(message, history), getAiErrorMessage)
     setIsSending(false)
 
-    if (result.ok) appendAnswer(updated.id, createMessage('assistant', result.value))
+    if (result.ok) afterAnswer(updated.id, result.value)
+  }
+
+  // La respuesta llega con los cambios de tareas aplicados en el backend: si hubo alguno,
+  // se avisa a las vistas para que vuelvan a pedir el listado.
+  function afterAnswer(threadId: string, answer: { reply: string; changes: AiTaskChanges }) {
+    appendAnswer(threadId, createMessage('assistant', answer.reply))
+
+    if (!hasTaskChanges(answer.changes)) return
+
+    notifyTasksChanged()
+    notify('Tus tareas se actualizaron desde el chat.')
   }
 
   return {

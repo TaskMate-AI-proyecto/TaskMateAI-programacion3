@@ -1,4 +1,4 @@
-import { cn } from '../../lib/cn'
+import { cn } from '../../utils/cn'
 import type { ChatMessage } from '../../hooks/useChatThreads'
 
 // Burbuja glassmorphic: el usuario en índigo translúcido, la IA en slate oscuro.

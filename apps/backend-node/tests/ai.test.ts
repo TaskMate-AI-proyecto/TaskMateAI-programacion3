@@ -3,7 +3,14 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { authHeaders, createTestApp } from './helpers';
 
 const prismaMock = vi.hoisted(() => ({
-  task: { findMany: vi.fn() },
+  task: {
+    findMany: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    findFirst: vi.fn(),
+    deleteMany: vi.fn(),
+  },
+  category: { findFirst: vi.fn() },
 }));
 const gemini = vi.hoisted(() => ({
   generateSubtasks: vi.fn(),
@@ -213,7 +220,11 @@ describe('rutas de IA', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.json()).toEqual({ success: true, reply: 'Divídela en tres pasos.' });
+      expect(response.json()).toEqual({
+        success: true,
+        reply: 'Divídela en tres pasos.',
+        changes: { created: [], updated: [], deletedIds: [] },
+      });
       expect(prismaMock.task.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { userId: 'user-1', status: { not: 'COMPLETED' } },
@@ -237,6 +248,45 @@ describe('rutas de IA', () => {
       });
 
       expect(gemini.generateChatReply).toHaveBeenLastCalledWith('Hola', [], []);
+    });
+
+    it('ejecuta los comandos de la respuesta y devuelve las tareas creadas, editadas y eliminadas', async () => {
+      prismaMock.task.findMany.mockResolvedValue([]);
+      prismaMock.task.create.mockResolvedValue({ id: 'nueva', title: 'Comprar pan' });
+      prismaMock.task.findFirst.mockResolvedValue({ id: 'task-1' });
+      prismaMock.task.update.mockResolvedValue({
+        id: 'task-1',
+        title: 'Entregar TP',
+        status: 'COMPLETED',
+      });
+      prismaMock.task.deleteMany.mockResolvedValue({ count: 1 });
+      gemini.generateChatReply.mockResolvedValue(
+        [
+          'Hecho.',
+          '[COMMAND]{"action":"CREATE_TASK","title":"Comprar pan"}[/COMMAND]',
+          '[COMMAND]{"action":"UPDATE_TASK","id":"task-1","status":"COMPLETED"}[/COMMAND]',
+          '[COMMAND]{"action":"DELETE_TASK","id":"task-2"}[/COMMAND]',
+        ].join('\n'),
+      );
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/ai/chat',
+        headers,
+        payload: { message: 'crear tarea comprar pan y completar la 1' },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body.reply).toBe('Hecho.');
+      expect(body.changes.created).toEqual([{ id: 'nueva', title: 'Comprar pan' }]);
+      expect(body.changes.updated).toEqual([
+        { id: 'task-1', title: 'Entregar TP', status: 'COMPLETED' },
+      ]);
+      expect(body.changes.deletedIds).toEqual(['task-2']);
+      expect(prismaMock.task.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ userId: 'user-1' }) }),
+      );
     });
 
     it('mapea los fallos de Gemini en el chat', async () => {

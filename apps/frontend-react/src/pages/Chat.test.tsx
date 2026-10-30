@@ -13,6 +13,7 @@ vi.mock('../api/aiApi', () => ({ sendChatMessage: vi.fn(), getDailySummary: vi.f
 vi.mock('../api/tasksApi', () => ({ getTasks: vi.fn() }))
 
 const storageKey = 'taskmate.chat-threads'
+const noChanges = { created: [], updated: [], deletedIds: [] }
 
 const auth: AuthContextValue = {
   token: 'jwt',
@@ -53,7 +54,7 @@ describe('Chat con IA', () => {
   beforeEach(() => {
     localStorage.clear()
     vi.mocked(getTasks).mockResolvedValue([])
-    vi.mocked(sendChatMessage).mockResolvedValue('Claro, aquí tienes los pasos.')
+    vi.mocked(sendChatMessage).mockResolvedValue({ reply: 'Claro, aquí tienes los pasos.', changes: noChanges })
   })
 
   it('muestra la cabecera de TaskMate AI en línea y una invitación cuando no hay mensajes', () => {

@@ -69,7 +69,15 @@ export interface AiChatTurn {
   text: string
 }
 
+// Tareas que el asistente creó, editó o eliminó al ejecutar comandos de la conversación.
+export interface AiTaskChanges {
+  created: Task[]
+  updated: Task[]
+  deletedIds: string[]
+}
+
 export interface AiChatResponse {
   success: true
   reply: string
+  changes: AiTaskChanges
 }

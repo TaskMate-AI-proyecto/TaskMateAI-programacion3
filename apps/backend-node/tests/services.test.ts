@@ -99,12 +99,13 @@ describe('services/gemini', () => {
       generateChatReply(
         '¿Cómo empiezo?',
         [{ role: 'user', text: 'Hola' }],
-        [{ title: 'Entregar', description: null, priority: 'HIGH', dueDate: null }],
+        [{ id: 'task-1', title: 'Entregar', description: null, priority: 'HIGH', dueDate: null }],
       ),
     ).resolves.toBe('Divídela en pasos.');
 
     const prompt = generateContent.mock.calls[0][0].contents as string;
-    expect(prompt).toContain('- Entregar | prioridad: HIGH | vence: sin fecha');
+    expect(prompt).toContain('- [task-1] Entregar | prioridad: HIGH | vence: sin fecha');
+    expect(prompt).toContain('[COMMAND]{"action":"CREATE_TASK"');
     expect(prompt).toContain('Usuario: Hola');
     expect(prompt).toContain('Usuario: ¿Cómo empiezo?');
   });

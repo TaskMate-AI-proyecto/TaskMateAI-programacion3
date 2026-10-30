@@ -1,5 +1,5 @@
 import { Plus, Search } from 'lucide-react'
-import { cn } from '../../lib/cn'
+import { cn } from '../../utils/cn'
 import type { ChatThread } from '../../hooks/useChatThreads'
 
 interface ChatThreadListProps {
