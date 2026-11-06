@@ -1,7 +1,11 @@
 node_modules
 dist
+coverage
 docs
 .env
 .env.*
 !.env.example
 npm-debug.log*
+*.log
+Dockerfile
+.dockerignore
