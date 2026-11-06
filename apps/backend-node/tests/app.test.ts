@@ -70,6 +70,16 @@ describe('aplicación Fastify', () => {
     expect(response.headers['access-control-allow-methods']).toContain('PUT');
   });
 
+  it('permite también el origen del frontend Vue (5174)', async () => {
+    const response = await app.inject({
+      method: 'OPTIONS',
+      url: '/api/auth/send-code',
+      headers: { origin: 'http://localhost:5174', 'access-control-request-method': 'POST' },
+    });
+
+    expect(response.headers['access-control-allow-origin']).toBe('http://localhost:5174');
+  });
+
   it('publica la especificación OpenAPI con el esquema bearer', async () => {
     const response = await app.inject({ method: 'GET', url: '/docs/json' });
 

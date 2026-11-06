@@ -8,7 +8,8 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   JWT_SECRET: z.string().min(1),
   GEMINI_API_KEY: z.string().min(1),
-  FRONTEND_URL: z.string().url().default('http://localhost:5173'),
+  // Lista separada por comas: cada frontend de desarrollo (React en 5173, Vue en 5174) necesita CORS.
+  FRONTEND_URL: z.string().default('http://localhost:5173,http://localhost:5174'),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().int().positive().default(587),
   SMTP_USER: z.string().optional(),

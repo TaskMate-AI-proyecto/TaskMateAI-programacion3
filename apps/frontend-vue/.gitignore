@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Configuración local (variables VITE_*): no se versiona
+.env
+.env.local
+.env.*
+!.env.example
