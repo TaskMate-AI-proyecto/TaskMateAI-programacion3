@@ -3,7 +3,7 @@
 
 > Documento **generado automáticamente** por la cátedra de Programación III (RepoSense + análisis de calidad + constancia). **No editar a mano**: se regenera en cada evaluación.
 > Rama evaluada: `main`. Análisis **heurístico** (regex + métricas): es una criba para orientar la revisión, **no una nota**.
-> Generado: 2026-11-05.
+> Generado: 2026-11-06.
 
 ## 1. Veredicto
 
@@ -13,9 +13,9 @@
 | Índice de calidad de servicios | **100/100** (mínimo 50) |
 | Criterios cumplidos | **16/16** |
 | Aprobado (semáforo) | **SI** |
-| Código (LOC) | 4,372 |
-| Archivos de código | 124 |
-| Tests (archivos) | 41 |
+| Código (LOC) | 6,071 |
+| Archivos de código | 168 |
+| Tests (archivos) | 58 |
 | Cobertura de líneas | 97.6% (mínimo 80%) |
 | Capas detectadas | presentacion, logica, datos, vistas, servicios, estado |
 
@@ -25,7 +25,7 @@
 
 | Autor | Commits | Código (LOC) | Tests (LOC) | Docs (LOC) | Días activos | % del código |
 |---|---:|---:|---:|---:|---:|---:|
-| santi-dona | 30 | 5,519 | 4,311 | 529 | 13 | 100% |
+| santi-dona | 33 | 7,516 | 5,739 | 529 | 14 | 100% |
 
 > _El LOC de autoría lo calcula RepoSense sobre el historial y puede diferir del LOC de código del análisis de calidad (que mira solo el estado de `main`)._
 
@@ -53,7 +53,7 @@ Cada aspecto indica **qué mide**, **por qué importa** y **tu resultado**. Cuan
 
 - **Qué mide:** Porcentaje de bloques de código repetidos (similitud) en el repositorio.
 - **Por qué importa:** Cada copia se mantiene por separado: un arreglo hay que repetirlo y los defectos se multiplican.
-- **Tu resultado:** **1.6%** de duplicación _(máximo 15%)_
+- **Tu resultado:** **10.1%** de duplicación _(máximo 15%)_
 
 ### 3. Secretos hardcodeados (SEC) — OK
 
@@ -107,13 +107,13 @@ Cada aspecto indica **qué mide**, **por qué importa** y **tu resultado**. Cuan
 
 - **Qué mide:** Complejidad ciclomática: cantidad de caminos posibles dentro de una función (condicionales, bucles, casos).
 - **Por qué importa:** Muchos caminos = difícil de seguir y de probar; suelen esconderse casos sin cubrir.
-- **Tu resultado:** **14** bloque(s) de complejidad alta _(máximo 5 por 1000 LOC (tenés 4372 LOC))_
+- **Tu resultado:** **15** bloque(s) de complejidad alta _(máximo 5 por 1000 LOC (tenés 6071 LOC))_
 
 ### 12. Funciones/métodos largos o con muchos parámetros (Tam) — OK
 
 - **Qué mide:** Tamaño de las funciones/métodos y cantidad de parámetros.
 - **Por qué importa:** Una función que hace varias cosas cuesta leerla, nombrarla y reutilizarla.
-- **Tu resultado:** **25** función/método(s) largos o con muchos parámetros _(máximo 10 por 1000 LOC)_
+- **Tu resultado:** **27** función/método(s) largos o con muchos parámetros _(máximo 10 por 1000 LOC)_
 
 ### 13. Acoplamiento alto (Acop) — OK
 
@@ -125,7 +125,7 @@ Cada aspecto indica **qué mide**, **por qué importa** y **tu resultado**. Cuan
 
 - **Qué mide:** Porcentaje de líneas de código ejecutadas por la suite de tests (cobertura real, no cantidad de archivos de test).
 - **Por qué importa:** Un test que existe pero no ejecuta el código no protege de nada: la cobertura muestra qué partes quedan sin verificar.
-- **Tu resultado:** **97.6%** de líneas cubiertas · fuente: ejecución: pytest · salteado: apps/frontend-react _(mínimo 80% de líneas)_
+- **Tu resultado:** **97.6%** de líneas cubiertas · fuente: ejecución: pytest · salteado: apps/frontend-vue, apps/frontend-react _(mínimo 80% de líneas)_
 
 ### 15. Endpoints del backend (EP) — OK
 
@@ -137,7 +137,7 @@ Cada aspecto indica **qué mide**, **por qué importa** y **tu resultado**. Cuan
 
 - **Qué mide:** Cantidad de vistas/componentes de pantalla del frontend.
 - **Por qué importa:** El frontend se mide por pantallas: pocas vistas sugiere poca cobertura de la interfaz pedida.
-- **Tu resultado:** **53** vista(s)/componente(s) _(mínimo 6)_
+- **Tu resultado:** **79** vista(s)/componente(s) _(mínimo 6)_
 
 ## 5. Observaciones y qué falta
 
