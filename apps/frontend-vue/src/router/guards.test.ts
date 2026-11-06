@@ -63,6 +63,15 @@ describe('guardas de navegación del router', () => {
     expect(await navigate('/no-existe')).toBe('/login')
   })
 
+  it('protege el chat igual que el panel y lleva la raíz al panel con sesión', async () => {
+    expect(await navigate('/chat')).toBe('/login')
+
+    useAuthStore().setSession(session)
+
+    expect(await navigate('/chat')).toBe('/chat')
+    expect(await navigate('/')).toBe('/dashboard')
+  })
+
   it('permite el registro a quien no tiene sesión', async () => {
     expect(await navigate('/register')).toBe('/register')
   })

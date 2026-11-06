@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory, type RouteRecordRaw, type RouterHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { resolveAuthRedirect, type AuthRouteMeta } from './guards'
+import AppShell from '../components/layout/AppShell.vue'
+import ChatView from '../views/ChatView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
@@ -10,10 +12,19 @@ declare module 'vue-router' {
 }
 
 const routes: RouteRecordRaw[] = [
-  { path: '/', redirect: '/login' },
   { path: '/login', component: LoginView, meta: { guestOnly: true } },
   { path: '/register', component: RegisterView, meta: { guestOnly: true } },
-  { path: '/dashboard', component: DashboardView, meta: { requiresAuth: true } },
+  {
+    // Las vistas protegidas comparten el shell con navegación; la raíz lleva al resumen.
+    path: '/',
+    component: AppShell,
+    meta: { requiresAuth: true },
+    children: [
+      { path: '', redirect: '/dashboard' },
+      { path: 'dashboard', component: DashboardView },
+      { path: 'chat', component: ChatView },
+    ],
+  },
   { path: '/:pathMatch(.*)*', redirect: '/login' },
 ]
 

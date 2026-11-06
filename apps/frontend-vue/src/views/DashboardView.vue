@@ -1,17 +1,15 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { RefreshCw } from 'lucide-vue-next'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '../stores/auth'
 import { useTasksData, type PriorityFilter } from '../composables/useTasksData'
 import { createTask, updateTask, deleteTask } from '../api/tasksApi'
+import { useTaskSyncStore } from '../stores/taskSync'
 import type { Task, TaskInput } from '../types/api'
 import DashboardTaskList from '../components/tasks/DashboardTaskList.vue'
 import TaskModal from '../components/tasks/TaskModal.vue'
 import DeleteTaskModal from '../components/tasks/DeleteTaskModal.vue'
 
-const router = useRouter()
-const auth = useAuthStore()
+const taskSync = useTaskSyncStore()
 
 const { tasks, categories, isLoading, error, loadAll, updateTasks, handleToggle } = useTasksData()
 
@@ -24,10 +22,11 @@ onMounted(() => {
   loadAll()
 })
 
-function logout() {
-  auth.clearSession()
-  void router.replace('/login')
-}
+// Si el asistente crea, edita o borra tareas, el listado se vuelve a pedir sin recargar la página.
+watch(
+  () => taskSync.version,
+  () => loadAll(),
+)
 
 async function handleSave(input: TaskInput) {
   const editing = dialog.value?.kind === 'form' ? dialog.value.task : null
@@ -82,15 +81,6 @@ async function handleDelete(task: Task) {
           @click="loadAll"
         >
           <RefreshCw :class="isLoading ? 'animate-spin' : ''" :size="18" />
-        </button>
-        <button
-          aria-label="Cerrar sesión"
-          class="icon-button"
-          title="Cerrar sesión"
-          type="button"
-          @click="logout"
-        >
-          <span class="sr-only">Cerrar sesión</span>
         </button>
       </div>
     </div>
