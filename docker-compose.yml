@@ -1,3 +1,7 @@
+# Sistema completo de TaskMate AI en un solo comando:
+#   docker compose up -d --build --wait
+# Requiere un archivo .env en la raíz (ver .env.example): JWT_SECRET y GEMINI_API_KEY son obligatorios.
+
 services:
   db:
     image: postgres:16-alpine
@@ -11,7 +15,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-taskmate_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./docker/postgres:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-taskmate_db}"]
       interval: 5s
@@ -19,6 +22,23 @@ services:
       retries: 5
       start_period: 5s
 
+  # Crea la base del backend Python si todavía no existe. Es idempotente: sirve también para volúmenes ya creados.
+  db-init:
+    image: postgres:16-alpine
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    command:
+      - sh
+      - -c
+      - |
+        psql -h db -U ${POSTGRES_USER:-postgres} -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='taskmate_python'" | grep -q 1 \
+          || psql -h db -U ${POSTGRES_USER:-postgres} -d postgres -c 'CREATE DATABASE taskmate_python'
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  # Aplica las migraciones de Prisma antes de arrancar el backend Node. Termina con código 0.
   migrate:
     build:
       context: ./apps/backend-node
@@ -67,8 +87,8 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:?Define GEMINI_API_KEY en .env}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173,http://localhost:5174}
     depends_on:
-      db:
-        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   frontend-react:
@@ -78,6 +98,9 @@ services:
         VITE_API_BASE_URL: http://localhost:3001
     ports:
       - "5173:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
     restart: unless-stopped
 
   frontend-vue:
@@ -87,6 +110,9 @@ services:
         VITE_API_BASE_URL: http://localhost:3001
     ports:
       - "5174:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
