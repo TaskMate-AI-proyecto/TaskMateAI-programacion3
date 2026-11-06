@@ -11,6 +11,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-taskmate_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-taskmate_db}"]
       interval: 5s
@@ -52,6 +53,40 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+    restart: unless-stopped
+
+  backend-python:
+    build:
+      context: ./apps/backend-python
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/taskmate_python
+      PORT: 8000
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?Define GEMINI_API_KEY en .env}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173,http://localhost:5174}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend-react:
+    build:
+      context: ./apps/frontend-react
+      args:
+        VITE_API_BASE_URL: http://localhost:3001
+    ports:
+      - "5173:8080"
+    restart: unless-stopped
+
+  frontend-vue:
+    build:
+      context: ./apps/frontend-vue
+      args:
+        VITE_API_BASE_URL: http://localhost:3001
+    ports:
+      - "5174:8080"
     restart: unless-stopped
 
 volumes:
