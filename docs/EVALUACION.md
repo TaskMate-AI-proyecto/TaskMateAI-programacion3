@@ -148,11 +148,11 @@ _Cumple **todos** los criterios del semáforo: no hay nada que arreglar para apr
 
 ## 6. Actividad en clase (miércoles y viernes)
 
-> Se consideran las **23 clases** del período (miércoles y viernes, según `config/constancia.json`; feriados y semanas sin clase descontados). `Commits` = commits de trabajo (no-merge); `Merges` = merges de PR (también son push). Los días sin actividad dicen **sin actividad**.
+> Se consideran las **26 clases** del período (miércoles y viernes, según `config/constancia.json`; feriados y semanas sin clase descontados). `Commits` = commits de trabajo (no-merge); `Merges` = merges de PR (también son push). Los días sin actividad dicen **sin actividad**.
 
 ### santi-dona
 
-**13/23 clases con actividad** · 33 commits · 24 merges
+**14/26 clases con actividad** · 38 commits · 28 merges
 
 | Fecha | Actividad | Repositorios | Commits / merges |
 |---|:--:|---|--:|
@@ -179,6 +179,9 @@ _Cumple **todos** los criterios del semáforo: no hay nada que arreglar para apr
 | 2026-10-23 | No | sin actividad | 0 / 0 |
 | 2026-10-28 | **Sí** | TaskMateAI-programacion3 | 3 / 4 |
 | 2026-10-30 | **Sí** | TaskMateAI-programacion3 | 4 / 3 |
+| 2026-11-04 | No | sin actividad | 0 / 0 |
+| 2026-11-06 | **Sí** | TaskMateAI-programacion3 | 5 / 4 |
+| 2026-11-11 | No | sin actividad | 0 / 0 |
 
 ## 7. Anexo: dónde mirar
 
