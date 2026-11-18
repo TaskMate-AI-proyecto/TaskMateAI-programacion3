@@ -1,11 +1,11 @@
 from .database import get_db, init_db, SessionLocal
-from .gemini import chat_with_gemini, get_gemini_error_response, GeminiError
+from .groq import chat_with_groq, get_groq_error_response, GroqError
 
 __all__ = [
     "get_db",
     "init_db",
     "SessionLocal",
-    "chat_with_gemini",
-    "get_gemini_error_response",
-    "GeminiError",
+    "chat_with_groq",
+    "get_groq_error_response",
+    "GroqError",
 ]

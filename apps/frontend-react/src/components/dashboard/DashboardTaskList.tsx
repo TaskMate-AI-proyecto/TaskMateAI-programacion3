@@ -1,7 +1,11 @@
 import { Check } from 'lucide-react'
-import type { Task, TaskPriority } from '../../types/api'
+import type { ViewMode } from '../../hooks/useViewMode'
+import type { Task, TaskPriority, TaskStatus } from '../../types/api'
 import { filterTasks, formatDueDate, isOverdue, priorityLabels, priorityStyles } from '../tasks/taskUtils'
 import { Badge } from '../ui/Badge'
+import { CollaborativeBadge } from '../tasks/CollaborativeBadge'
+import { KanbanBoard } from '../kanban/KanbanBoard'
+import { ViewModeToggle } from './ViewModeToggle'
 
 export type PriorityFilter = TaskPriority | 'ALL'
 
@@ -70,6 +74,7 @@ function TaskRow(props: RowProps) {
     <li className={rowClass}>
       <CompletionButton {...props} />
       <span className={`min-w-0 flex-1 truncate font-medium ${done ? 'text-slate-500 line-through' : 'text-slate-100'}`}>{task.title}</span>
+      <CollaborativeBadge users={task.assignedUsers} />
       <DueDate task={task} />
       <Badge tone={priorityStyles[task.priority]}>{priorityLabels[task.priority]}</Badge>
     </li>
@@ -103,15 +108,22 @@ interface DashboardTaskListProps {
   isLoading: boolean
   priority: PriorityFilter
   pendingId: string | null
+  view: ViewMode
   onPriorityChange: (priority: PriorityFilter) => void
+  onViewChange: (view: ViewMode) => void
   onToggle: (task: Task) => void
+  onMove: (task: Task, status: TaskStatus) => void
 }
 
-export function DashboardTaskList({ tasks, isLoading, priority, pendingId, onPriorityChange, onToggle }: DashboardTaskListProps) {
+export function DashboardTaskList({ tasks, isLoading, priority, pendingId, view, onPriorityChange, onViewChange, onToggle, onMove }: DashboardTaskListProps) {
+  // El tablero necesita todo el ancho del Dashboard; la lista conserva la columna principal.
   return (
-    <section>
+    <section className={view === 'kanban' ? 'min-w-0 xl:col-span-2' : 'min-w-0'}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-2xl font-semibold text-slate-100">Tareas</h2>
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="font-display text-2xl font-semibold text-slate-100">Tareas</h2>
+          <ViewModeToggle onChange={onViewChange} value={view} />
+        </div>
         <div aria-label="Filtrar por prioridad" className="flex flex-wrap gap-2" role="group">
           {priorityChips.map((chip) => {
             const selected = priority === chip.value
@@ -130,7 +142,11 @@ export function DashboardTaskList({ tasks, isLoading, priority, pendingId, onPri
           })}
         </div>
       </div>
-      <TaskRows isLoading={isLoading} onToggle={onToggle} pendingId={pendingId} priority={priority} tasks={tasks} />
+      {view === 'kanban' ? (
+        <KanbanBoard isLoading={isLoading} onMove={onMove} pendingId={pendingId} tasks={filterTasks(tasks, { search: '', status: 'ALL', priority, categoryId: '' })} />
+      ) : (
+        <TaskRows isLoading={isLoading} onToggle={onToggle} pendingId={pendingId} priority={priority} tasks={tasks} />
+      )}
     </section>
   )
 }

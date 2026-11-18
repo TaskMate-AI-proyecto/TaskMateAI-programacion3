@@ -12,7 +12,7 @@ const prismaMock = vi.hoisted(() => ({
   },
   category: { findFirst: vi.fn() },
 }));
-const gemini = vi.hoisted(() => ({
+const groq = vi.hoisted(() => ({
   generateSubtasks: vi.fn(),
   generateDailySummary: vi.fn(),
   generateChatReply: vi.fn(),
@@ -20,9 +20,9 @@ const gemini = vi.hoisted(() => ({
 
 vi.mock('../src/lib/prisma', () => ({ default: prismaMock }));
 vi.mock('../src/services/email', () => ({ sendVerificationCode: vi.fn() }));
-vi.mock('../src/services/gemini', () => gemini);
+vi.mock('../src/services/groq', () => groq);
 
-function geminiError(status: number, message = 'fallo de Gemini') {
+function groqError(status: number, message = 'fallo de Groq') {
   return Object.assign(new Error(message), { status });
 }
 
@@ -50,7 +50,7 @@ describe('rutas de IA', () => {
       expect(response.statusCode).toBe(401);
     });
 
-    it('rechaza un título vacío sin llamar a Gemini', async () => {
+    it('rechaza un título vacío sin llamar a Groq', async () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/ai/generate-subtasks',
@@ -59,11 +59,11 @@ describe('rutas de IA', () => {
       });
 
       expect(response.statusCode).toBe(400);
-      expect(gemini.generateSubtasks).not.toHaveBeenCalled();
+      expect(groq.generateSubtasks).not.toHaveBeenCalled();
     });
 
     it('devuelve las subtareas generadas', async () => {
-      gemini.generateSubtasks.mockResolvedValue(['Leer', 'Resumir', 'Repasar']);
+      groq.generateSubtasks.mockResolvedValue(['Leer', 'Resumir', 'Repasar']);
 
       const response = await app.inject({
         method: 'POST',
@@ -74,34 +74,31 @@ describe('rutas de IA', () => {
 
       expect(response.statusCode).toBe(200);
       expect(response.json()).toEqual({ success: true, subtasks: ['Leer', 'Resumir', 'Repasar'] });
-      expect(gemini.generateSubtasks).toHaveBeenCalledWith('Estudiar', 'Parcial');
+      expect(groq.generateSubtasks).toHaveBeenCalledWith('Estudiar', 'Parcial');
     });
 
     it.each([
-      [429, 429, 'Se agotó la cuota de Gemini. Intente nuevamente en unos minutos.'],
-      [503, 503, 'Gemini no está disponible temporalmente. Intente nuevamente más tarde.'],
-      [401, 400, 'La clave de la API de Gemini no es válida.'],
-      [403, 400, 'La clave de la API de Gemini no es válida.'],
-      [418, 500, 'No se pudo completar la solicitud con Gemini.'],
-    ])(
-      'traduce el status %i de Gemini a %i',
-      async (geminiStatus, expectedStatus, expectedMessage) => {
-        gemini.generateSubtasks.mockRejectedValue(geminiError(geminiStatus));
+      [429, 429, 'Se agotó la cuota de Groq. Intente nuevamente en unos minutos.'],
+      [503, 503, 'Groq no está disponible temporalmente. Intente nuevamente más tarde.'],
+      [401, 400, 'La clave de la API de Groq no es válida.'],
+      [403, 400, 'La clave de la API de Groq no es válida.'],
+      [418, 500, 'No se pudo completar la solicitud con Groq.'],
+    ])('traduce el status %i de Groq a %i', async (groqStatus, expectedStatus, expectedMessage) => {
+      groq.generateSubtasks.mockRejectedValue(groqError(groqStatus));
 
-        const response = await app.inject({
-          method: 'POST',
-          url: '/api/ai/generate-subtasks',
-          headers,
-          payload: { title: 'Estudiar' },
-        });
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/ai/generate-subtasks',
+        headers,
+        payload: { title: 'Estudiar' },
+      });
 
-        expect(response.statusCode).toBe(expectedStatus);
-        expect(response.json()).toEqual({ success: false, message: expectedMessage });
-      },
-    );
+      expect(response.statusCode).toBe(expectedStatus);
+      expect(response.json()).toEqual({ success: false, message: expectedMessage });
+    });
 
     it('trata una clave inválida anunciada en el mensaje como 400', async () => {
-      gemini.generateSubtasks.mockRejectedValue(new Error('API_KEY_INVALID: revisa la clave'));
+      groq.generateSubtasks.mockRejectedValue(new Error('API_KEY_INVALID: revisa la clave'));
 
       const response = await app.inject({
         method: 'POST',
@@ -114,7 +111,7 @@ describe('rutas de IA', () => {
     });
 
     it('responde 500 ante errores que no son del proveedor', async () => {
-      gemini.generateSubtasks.mockRejectedValue('texto plano');
+      groq.generateSubtasks.mockRejectedValue('texto plano');
 
       const response = await app.inject({
         method: 'POST',
@@ -130,7 +127,7 @@ describe('rutas de IA', () => {
   describe('POST /api/ai/summarize', () => {
     it('resume solo las tareas pendientes del usuario', async () => {
       prismaMock.task.findMany.mockResolvedValue([{ title: 'Entregar', priority: 'HIGH' }]);
-      gemini.generateDailySummary.mockResolvedValue('Hoy: entregar.');
+      groq.generateDailySummary.mockResolvedValue('Hoy: entregar.');
 
       const response = await app.inject({
         method: 'POST',
@@ -144,14 +141,14 @@ describe('rutas de IA', () => {
       expect(prismaMock.task.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { userId: 'user-1', status: { not: 'COMPLETED' } } }),
       );
-      expect(gemini.generateDailySummary).toHaveBeenCalledWith([
+      expect(groq.generateDailySummary).toHaveBeenCalledWith([
         { title: 'Entregar', priority: 'HIGH' },
       ]);
     });
 
-    it('mapea los fallos de Gemini del resumen', async () => {
+    it('mapea los fallos de Groq del resumen', async () => {
       prismaMock.task.findMany.mockResolvedValue([]);
-      gemini.generateDailySummary.mockRejectedValue(geminiError(503));
+      groq.generateDailySummary.mockRejectedValue(groqError(503));
 
       const response = await app.inject({
         method: 'POST',
@@ -182,7 +179,7 @@ describe('rutas de IA', () => {
       expect(response.statusCode).toBe(401);
     });
 
-    it('rechaza un mensaje vacío o un historial demasiado largo sin llamar a Gemini', async () => {
+    it('rechaza un mensaje vacío o un historial demasiado largo sin llamar a Groq', async () => {
       const empty = await app.inject({
         method: 'POST',
         url: '/api/ai/chat',
@@ -201,12 +198,12 @@ describe('rutas de IA', () => {
 
       expect(empty.statusCode).toBe(400);
       expect(tooLong.statusCode).toBe(400);
-      expect(gemini.generateChatReply).not.toHaveBeenCalled();
+      expect(groq.generateChatReply).not.toHaveBeenCalled();
     });
 
-    it('responde con el texto de Gemini usando las tareas pendientes y el historial', async () => {
+    it('responde con el texto de Groq usando las tareas pendientes y el historial', async () => {
       prismaMock.task.findMany.mockResolvedValue([{ title: 'Entregar', priority: 'HIGH' }]);
-      gemini.generateChatReply.mockResolvedValue('Divídela en tres pasos.');
+      groq.generateChatReply.mockResolvedValue('Divídela en tres pasos.');
       const history = [
         { role: 'user', text: 'Hola' },
         { role: 'assistant', text: '¡Hola!' },
@@ -231,14 +228,50 @@ describe('rutas de IA', () => {
           take: 50,
         }),
       );
-      expect(gemini.generateChatReply).toHaveBeenCalledWith('Divide Entregar', history, [
+      expect(groq.generateChatReply).toHaveBeenCalledWith('Divide Entregar', history, [
         { title: 'Entregar', priority: 'HIGH' },
       ]);
     });
 
+    it('pasa la personalidad y las instrucciones elegidas en Ajustes al prompt de Groq', async () => {
+      prismaMock.task.findMany.mockResolvedValue([]);
+      groq.generateChatReply.mockResolvedValue('Listo.');
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/ai/chat',
+        headers,
+        payload: {
+          message: 'Hola',
+          assistant: {
+            personality: 'concise',
+            instructions: 'Responde siempre en tercera persona',
+          },
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(groq.generateChatReply).toHaveBeenCalledWith('Hola', [], [], {
+        personality: 'concise',
+        instructions: 'Responde siempre en tercera persona',
+      });
+    });
+
+    it('rechaza una personalidad que no existe', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/ai/chat',
+        headers,
+        payload: { message: 'Hola', assistant: { personality: 'sarcastic' } },
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(groq.generateChatReply).not.toHaveBeenCalled();
+    });
+
     it('usa historial vacío cuando no se envía', async () => {
       prismaMock.task.findMany.mockResolvedValue([]);
-      gemini.generateChatReply.mockResolvedValue('Hola.');
+      groq.generateChatReply.mockResolvedValue('Hola.');
 
       await app.inject({
         method: 'POST',
@@ -247,7 +280,7 @@ describe('rutas de IA', () => {
         payload: { message: 'Hola' },
       });
 
-      expect(gemini.generateChatReply).toHaveBeenLastCalledWith('Hola', [], []);
+      expect(groq.generateChatReply).toHaveBeenLastCalledWith('Hola', [], []);
     });
 
     it('ejecuta los comandos de la respuesta y devuelve las tareas creadas, editadas y eliminadas', async () => {
@@ -260,7 +293,7 @@ describe('rutas de IA', () => {
         status: 'COMPLETED',
       });
       prismaMock.task.deleteMany.mockResolvedValue({ count: 1 });
-      gemini.generateChatReply.mockResolvedValue(
+      groq.generateChatReply.mockResolvedValue(
         [
           'Hecho.',
           '[COMMAND]{"action":"CREATE_TASK","title":"Comprar pan"}[/COMMAND]',
@@ -289,9 +322,9 @@ describe('rutas de IA', () => {
       );
     });
 
-    it('mapea los fallos de Gemini en el chat', async () => {
+    it('mapea los fallos de Groq en el chat', async () => {
       prismaMock.task.findMany.mockResolvedValue([]);
-      gemini.generateChatReply.mockRejectedValue(geminiError(429));
+      groq.generateChatReply.mockRejectedValue(groqError(429));
 
       const response = await app.inject({
         method: 'POST',

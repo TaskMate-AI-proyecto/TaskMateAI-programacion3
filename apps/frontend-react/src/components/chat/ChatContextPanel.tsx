@@ -13,7 +13,7 @@ interface ChatContextPanelProps {
 
 function ContextMetric({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+    <div className="rounded-2xl border border-glass/10 bg-glass/5 p-3">
       <p className="font-display text-2xl font-semibold text-slate-100">{value}</p>
       <p className="text-xs text-slate-400">{label}</p>
     </div>
@@ -50,7 +50,7 @@ export function ChatContextPanel({ email, pending }: ChatContextPanelProps) {
           <ul className="space-y-2">
             {analyzed.map((task) => (
               <li key={task.id}>
-                <Link className="flex items-center justify-between gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 transition hover:bg-white/10" to="/tasks">
+                <Link className="flex items-center justify-between gap-2 rounded-2xl border border-glass/10 bg-glass/5 px-3 py-2 transition hover:bg-glass/10" to="/tasks">
                   <span className="min-w-0 truncate text-sm text-slate-100">{task.title}</span>
                   <Badge tone={priorityStyles[task.priority]}>{priorityLabels[task.priority]}</Badge>
                 </Link>

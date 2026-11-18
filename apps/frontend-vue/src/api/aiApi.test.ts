@@ -19,7 +19,11 @@ describe('sendChatMessage', () => {
 
     await sendChatMessage('¿Qué tengo hoy?', history)
 
-    expect(http.post).toHaveBeenCalledWith('/api/ai/chat', { message: '¿Qué tengo hoy?', history })
+    expect(http.post).toHaveBeenCalledWith('/api/ai/chat', {
+      message: '¿Qué tengo hoy?',
+      history,
+      assistant: { personality: 'professional' },
+    })
   })
 
   it('devuelve la respuesta y los cambios de tareas que aplicó el backend', async () => {

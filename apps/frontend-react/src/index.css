@@ -4,8 +4,58 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Acento por defecto (púrpura). Ajustes sobrescribe estas variables en el elemento raíz. */
+:root {
+  --indigo-50: 238 242 255;
+  --indigo-300: 165 180 252;
+  --indigo-400: 129 140 248;
+  --indigo-500: 99 102 241;
+  --indigo-600: 79 70 229;
+  --indigo-700: 67 56 202;
+  --indigo-950: 30 27 75;
+  --violet-500: 139 92 246;
+  --violet-600: 124 58 237;
+}
+
+/* Tema: la escala slate se invierte en claro y el vidrio cambia de color. La clase .dark en <html> activa la paleta oscura. */
+:root {
+  color-scheme: light;
+  --slate-50: 2 6 23;
+  --slate-100: 15 23 42;
+  --slate-200: 30 41 59;
+  --slate-300: 51 65 85;
+  --slate-400: 71 85 105;
+  --slate-500: 100 116 139;
+  --slate-600: 148 163 184;
+  --slate-700: 203 213 225;
+  --slate-800: 226 232 240;
+  --slate-900: 241 245 249;
+  --slate-950: 248 250 252;
+  --glass-rgb: 15 23 42;
+  --glass-bg: rgb(255 255 255 / 0.7);
+  --glass-shadow: 0 8px 32px -12px rgb(15 23 42 / 0.18);
+}
+
+:root.dark {
+  color-scheme: dark;
+  --slate-50: 248 250 252;
+  --slate-100: 241 245 249;
+  --slate-200: 226 232 240;
+  --slate-300: 203 213 225;
+  --slate-400: 148 163 184;
+  --slate-500: 100 116 139;
+  --slate-600: 71 85 105;
+  --slate-700: 51 65 85;
+  --slate-800: 30 41 59;
+  --slate-900: 15 23 42;
+  --slate-950: 2 6 23;
+  --glass-rgb: 255 255 255;
+  --glass-bg: rgb(15 23 42 / 0.4);
+  --glass-shadow: 0 8px 32px -12px rgb(0 0 0 / 0.5);
+}
+
 @layer base {
-  body { @apply m-0 bg-canvas font-sans text-ink antialiased; }
+  body { @apply m-0 bg-canvas font-sans text-ink antialiased dark:bg-slate-950 dark:text-slate-100; }
   button { font: inherit; }
 }
 
@@ -25,22 +75,108 @@
   .font-display { font-family: 'Fraunces', Georgia, serif; }
   .eyebrow { @apply mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-coral; }
   /* Glassmorphism: paneles flotantes translúcidos sobre el fondo atmosférico. */
-  .glass-card { @apply rounded-2xl border border-white/10 bg-slate-900/40 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.5)] backdrop-blur-xl; }
-  .glass-pill { @apply rounded-full border border-white/10 bg-slate-900/40 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.5)] backdrop-blur-xl; }
-  .nav-capsule { @apply flex flex-col items-center gap-2 rounded-full border border-white/10 bg-slate-900/40 p-2 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.5)] backdrop-blur-xl; }
-  .icon-button { @apply inline-grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-slate-900/40 text-slate-100 backdrop-blur-xl transition hover:border-indigo-400/50 hover:bg-white/10 disabled:cursor-wait disabled:opacity-60; }
+  .glass-card { @apply rounded-2xl border border-glass/10 backdrop-blur-xl; background-color: var(--glass-bg); box-shadow: var(--glass-shadow); }
+  .glass-pill { @apply rounded-full border border-glass/10 backdrop-blur-xl; background-color: var(--glass-bg); box-shadow: var(--glass-shadow); }
+  .nav-capsule { @apply flex flex-col items-center gap-2 rounded-full border border-glass/10 p-2 backdrop-blur-xl; background-color: var(--glass-bg); box-shadow: var(--glass-shadow); }
+  .icon-button { @apply inline-grid h-10 w-10 place-items-center rounded-full border border-glass/10 text-slate-100 backdrop-blur-xl transition hover:border-indigo-400/50 hover:bg-glass/10 disabled:cursor-wait disabled:opacity-60; background-color: var(--glass-bg); }
   .command-button { @apply inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_24px_-8px_rgba(99,102,241,0.6)] transition hover:brightness-110; }
-  .nav-link { @apply inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-slate-400 transition hover:bg-white/5 hover:text-slate-100; }
-  .nav-icon { @apply grid h-11 w-11 place-items-center rounded-full text-slate-400 transition hover:bg-white/10 hover:text-white; }
+  .nav-link { @apply inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-slate-400 transition hover:bg-glass/5 hover:text-slate-100; }
+  .nav-icon { @apply grid h-11 w-11 place-items-center rounded-full text-slate-400 transition hover:bg-glass/10 hover:text-slate-100; }
   /* Pestaña o icono activo: brillo índigo sutil, sin bloque sólido. */
-  .nav-link-active { @apply bg-white/10 text-white shadow-[0_0_18px_-4px_rgba(99,102,241,0.7)] ring-1 ring-indigo-400/40 hover:text-white; }
+  .nav-link-active { @apply bg-glass/10 text-slate-100 shadow-[0_0_18px_-4px_rgba(99,102,241,0.7)] ring-1 ring-indigo-400/40 hover:text-slate-100; }
   .status-panel { @apply min-h-44 rounded-md border border-ink/10 bg-white p-5 shadow-[0_8px_22px_rgba(20,33,61,0.07)]; }
   .status-panel h2 { @apply mt-8 font-display text-2xl font-semibold; }
   .status-panel p { @apply mt-2 text-sm leading-6 text-ink/65; }
   .status-ok { @apply rounded-full bg-mint/15 px-2.5 py-1 text-xs font-semibold text-mint; }
   .status-wait { @apply rounded-full bg-coral/15 px-2.5 py-1 text-xs font-semibold text-coral; }
-  .empty-state { @apply flex min-h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/15 bg-slate-900/40 p-8 text-center text-slate-400 backdrop-blur-xl; }
+  .empty-state { @apply flex min-h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-glass/15 p-8 text-center text-slate-400 backdrop-blur-xl; background-color: var(--glass-bg); }
   /* Pantallas de acceso y estado de sesión: fondo oscuro atmosférico, contenido centrado. */
-  .auth-page { @apply relative mx-auto flex min-h-screen w-full max-w-md flex-col items-stretch justify-center gap-6 overflow-hidden bg-slate-950 px-6 py-10 text-slate-100; }
+  .auth-page { @apply relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-slate-950 p-4 text-slate-100 md:p-8; }
   .text-link { @apply w-fit border-b border-indigo-500 pb-1 font-medium text-indigo-500 hover:text-indigo-400; }
+}
+
+/* Transición "gota de tinta" al cambiar de tema (View Transitions API). El círculo nace en --x / --y del clic. */
+@keyframes ink-drop-reveal {
+  from { clip-path: circle(0% at var(--x, 50%) var(--y, 50%)); }
+  to { clip-path: circle(150% at var(--x, 50%) var(--y, 50%)); }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: 0.8s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+::view-transition-new(root) {
+  animation-name: ink-drop-reveal;
+  clip-path: circle(0% at var(--x, 50%) var(--y, 50%));
+}
+
+::view-transition-old(root) {
+  animation-name: none;
+  mix-blend-mode: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.01ms;
+  }
+}
+
+/* Verso: los dos paneles se superponen; el oculto queda .inert y cambia de opacidad cuando la hoja cubre el centro. */
+.inert {
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s 0.35s;
+}
+
+.verso-panel {
+  transition: opacity 0.3s 0.35s;
+}
+
+/* Pantallas pequeñas y movimiento reducido: sólo fundido, sin retardo. */
+@media (max-width: 639px) {
+  .inert,
+  .verso-panel {
+    transition-delay: 0s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inert,
+  .verso-panel {
+    transition-delay: 0s;
+  }
+}
+
+/* Campos de Ajustes: etiqueta arriba, campo de vidrio con foco resplandeciente. Mismo acabado en React y Vue. */
+@layer components {
+  .settings-label {
+    @apply mb-1.5 block text-sm font-medium text-slate-200;
+  }
+
+  .settings-field {
+    @apply w-full rounded-xl border border-glass/10 bg-glass/5 px-4 py-2.5 text-sm text-slate-100 backdrop-blur-md outline-none transition placeholder:text-slate-500 focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20;
+  }
+
+  .settings-textarea {
+    @apply min-h-[100px] resize-y;
+  }
+
+  .settings-hint {
+    @apply mt-1 text-xs text-slate-400;
+  }
+}
+
+/* Tarjeta Kanban recién soltada: cae desde arriba con un pequeño rebote. */
+@media (prefers-reduced-motion: no-preference) {
+  .kanban-drop {
+    animation: kanban-drop 480ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+@keyframes kanban-drop {
+  0% { opacity: 0.4; transform: translateY(-16px) scale(0.96); }
+  60% { opacity: 1; transform: translateY(3px) scale(1.01); }
+  100% { opacity: 1; transform: none; }
 }

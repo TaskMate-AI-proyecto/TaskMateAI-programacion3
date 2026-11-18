@@ -11,13 +11,13 @@ const quickPrompts = [
 
 function ChatHeader() {
   return (
-    <header className="flex items-center gap-3 border-b border-white/10 pb-4">
+    <header className="flex items-center gap-3 border-b border-glass/10 pb-4">
       <span className="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 shadow-[0_0_20px_-4px_rgba(139,92,246,0.8)]">
         <Bot size={20} />
       </span>
       <div>
         <p className="font-semibold text-slate-100">TaskMate AI</p>
-        <p className="flex items-center gap-1.5 text-xs text-emerald-300">
+        <p className="flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-300">
           <span aria-hidden className="h-2 w-2 rounded-full bg-emerald-400" />
           Online
         </p>
@@ -51,7 +51,7 @@ function SuggestionChips({ disabled, onPick }: { disabled: boolean; onPick: (pro
     <div className="flex flex-wrap gap-2">
       {quickPrompts.map(({ label, prompt }) => (
         <button
-          className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-200 backdrop-blur-xl transition hover:border-indigo-400/50 hover:bg-white/10 disabled:opacity-50"
+          className="rounded-full border border-glass/10 bg-glass/5 px-3 py-1.5 text-xs font-semibold text-slate-200 backdrop-blur-xl transition hover:border-indigo-400/50 hover:bg-glass/10 disabled:opacity-50"
           disabled={disabled}
           key={label}
           onClick={() => onPick(prompt)}
@@ -83,7 +83,7 @@ function ChatComposer({ disabled, onSend }: ChatComposerProps) {
   }
 
   return (
-    <form className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/60 p-1.5 pl-4 backdrop-blur-xl" onSubmit={handleSubmit}>
+    <form className="flex items-center gap-2 rounded-full border border-glass/10 bg-slate-950/60 p-1.5 pl-4 backdrop-blur-xl" onSubmit={handleSubmit}>
       <input
         aria-label="Mensaje para TaskMate AI"
         className="min-w-0 flex-1 bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500"

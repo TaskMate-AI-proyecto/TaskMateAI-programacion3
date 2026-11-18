@@ -1,4 +1,5 @@
 import axiosClient from './axiosClient'
+import { assistantStyle, loadSettings } from '../settings/settings'
 import { getTaskById } from './tasksApi'
 import type { AiChatResponse, AiChatTurn, AiSubtasksResponse, AiSummaryResponse } from '../types/api'
 
@@ -20,6 +21,7 @@ export async function getDailySummary() {
 // El historial es la conversación previa del hilo; el backend recibe como máximo 20 turnos.
 // Devuelve la respuesta y los cambios de tareas que el backend aplicó al ejecutar comandos.
 export async function sendChatMessage(message: string, history: AiChatTurn[]) {
-  const { data } = await axiosClient.post<AiChatResponse>('/api/ai/chat', { message, history })
+  // La personalidad y las instrucciones de Ajustes viajan con cada mensaje.
+  const { data } = await axiosClient.post<AiChatResponse>('/api/ai/chat', { message, history, assistant: assistantStyle(loadSettings()) })
   return { reply: data.reply, changes: data.changes }
 }

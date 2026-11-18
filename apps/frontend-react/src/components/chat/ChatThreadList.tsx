@@ -30,7 +30,7 @@ export function ChatThreadList({ threads, activeId, search, onSearch, onSelect, 
         <Search aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
         <input
           aria-label="Buscar conversaciones"
-          className="w-full rounded-full border border-white/10 bg-slate-950/60 py-2 pl-9 pr-3 text-sm text-slate-100 outline-none focus:border-indigo-400"
+          className="w-full rounded-full border border-glass/10 bg-slate-950/60 py-2 pl-9 pr-3 text-sm text-slate-100 outline-none focus:border-indigo-400"
           onChange={(event) => onSearch(event.target.value)}
           placeholder="Buscar en el historial"
           type="search"
@@ -47,7 +47,7 @@ export function ChatThreadList({ threads, activeId, search, onSearch, onSelect, 
                 aria-current={isActive ? 'true' : undefined}
                 className={cn(
                   'w-full rounded-2xl border px-3 py-2.5 text-left transition',
-                  isActive ? 'border-indigo-400/40 bg-white/10' : 'border-transparent hover:bg-white/5',
+                  isActive ? 'border-indigo-400/40 bg-glass/10' : 'border-transparent hover:bg-glass/5',
                 )}
                 onClick={() => onSelect(thread.id)}
                 type="button"

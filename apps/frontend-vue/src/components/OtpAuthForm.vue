@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { CheckCircle2 } from 'lucide-vue-next'
-import { RouterLink, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useOtpFlow } from '../composables/useOtpFlow'
 import { useAuthStore } from '../stores/auth'
 import type { AuthMode } from '../types/auth'
-import Atmosphere from './layout/Atmosphere.vue'
 import OtpCodeStep from './otp/OtpCodeStep.vue'
 import OtpEmailStep from './otp/OtpEmailStep.vue'
 import OtpHeader from './otp/OtpHeader.vue'
 import OtpSwitchLink from './otp/OtpSwitchLink.vue'
 
-const props = defineProps<{ mode: AuthMode }>()
+// Panel de un formulario (login o registro). Los dos paneles comparten tarjeta en AuthView; el oculto queda inerte.
+const props = withDefaults(defineProps<{ mode: AuthMode; isActive?: boolean }>(), { isActive: true })
+
+const emit = defineEmits<{ 'switch-mode': [] }>()
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -21,40 +23,43 @@ const flow = useOtpFlow({
     void router.replace('/dashboard')
   },
 })
-const { name, email, code, step, isSubmitting, message, error, canVerify } = flow
+const { name, email, step, isSubmitting, message, error, otpStatus, requestCode, verifyCode, completeLogin, resetOtpStatus, backToEmail } = flow
 </script>
 
 <template>
-  <main class="auth-page">
-    <Atmosphere />
-    <RouterLink class="relative z-10 font-display text-xl font-semibold tracking-wide text-slate-100" to="/dashboard">
-      TaskMate
-    </RouterLink>
-    <div class="glass-card relative z-10 w-full space-y-5 rounded-3xl p-8 shadow-[0_0_48px_-16px_rgba(99,102,241,0.45)]">
-      <OtpHeader :mode="props.mode" :step="step" />
-      <p v-if="message" class="flex items-center gap-2 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-3 text-sm text-emerald-300">
-        <CheckCircle2 aria-hidden :size="17" />
-        {{ message }}
-      </p>
-      <p v-if="error" aria-live="polite" class="rounded-2xl border border-coral/30 bg-coral/10 p-3 text-sm text-coral">{{ error }}</p>
+  <section
+    :class="[
+      'verso-panel col-start-1 row-start-1 flex flex-col justify-center gap-5 md:w-1/2',
+      mode === 'login' ? 'md:justify-self-start' : 'md:justify-self-end',
+      { inert: !isActive },
+    ]"
+    :inert="!isActive"
+  >
+    <OtpHeader :is-active="isActive" :mode="props.mode" :step="step" />
+    <p v-if="message" class="animate-fade-up flex items-center gap-2 rounded-2xl border border-mint/25 bg-mint/10 p-3 text-sm text-emerald-700 dark:text-emerald-300">
+      <CheckCircle2 aria-hidden :size="17" />
+      {{ message }}
+    </p>
+    <p v-if="error" aria-live="polite" class="animate-fade-up rounded-2xl border border-coral/30 bg-coral/10 p-3 text-sm text-coral">{{ error }}</p>
+    <!-- La clave por paso vuelve a montar el formulario y reproduce la entrada al cambiar de correo a código. -->
+    <div :key="step" class="animate-fade-up">
       <OtpEmailStep
         v-if="step === 'email'"
         v-model:email="email"
         v-model:name="name"
         :is-register="props.mode === 'register'"
         :is-submitting="isSubmitting"
-        @submit="flow.requestCode"
+        @submit="requestCode"
       />
       <OtpCodeStep
         v-else
-        :can-verify="canVerify"
-        :is-submitting="isSubmitting"
-        :model-value="code"
-        @back="flow.backToEmail"
-        @submit="flow.verifyCode"
-        @update:model-value="flow.setCode"
+        :status="otpStatus"
+        @back="backToEmail"
+        @change="resetOtpStatus"
+        @complete="verifyCode"
+        @success-done="completeLogin"
       />
-      <OtpSwitchLink :mode="props.mode" />
     </div>
-  </main>
+    <OtpSwitchLink :mode="props.mode" @switch-mode="emit('switch-mode')" />
+  </section>
 </template>

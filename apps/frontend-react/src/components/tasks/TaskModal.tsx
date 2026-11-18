@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import type { Category, Task, TaskInput, TaskPriority, TaskStatus } from '../../types/api'
 import { SubtaskGenerator } from '../ai/SubtaskGenerator'
 import { fieldClass } from '../ui/fieldClass'
+import { CollaboratorPicker } from './CollaboratorPicker'
 import { Modal } from '../ui/Modal'
 import { SelectField } from '../ui/SelectField'
 import { appendSubtasks, priorityOptions, statusOptions, toCategoryOptions, toFormValues, toTaskInput, type TaskFormValues } from './taskUtils'
@@ -22,11 +23,12 @@ function submitLabel(isSaving: boolean, isEditing: boolean) {
 
 export function TaskModal({ task, categories, isSaving, onSubmit, onClose }: TaskModalProps) {
   const [values, setValues] = useState(() => toFormValues(task))
+  const [collaboratorIds, setCollaboratorIds] = useState<string[]>(() => task?.assignedUsers?.map((user) => user.id) ?? [])
   const setField = <K extends keyof TaskFormValues>(key: K) => (value: TaskFormValues[K]) => setValues((current) => ({ ...current, [key]: value }))
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    onSubmit(toTaskInput(values))
+    onSubmit({ ...toTaskInput(values), collaboratorIds })
   }
 
   return (
@@ -46,6 +48,10 @@ export function TaskModal({ task, categories, isSaving, onSubmit, onClose }: Tas
           <label className="block text-sm font-medium">Fecha de vencimiento
             <input className={fieldClass} onChange={(event) => setField('dueDate')(event.target.value)} type="date" value={values.dueDate} />
           </label>
+        </div>
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Agregar amigo / colaborador</p>
+          <CollaboratorPicker onChange={setCollaboratorIds} selectedIds={collaboratorIds} />
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <button className="rounded-md px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800" onClick={onClose} type="button">Cancelar</button>

@@ -20,7 +20,8 @@ export function buildMetrics(tasks: Task[]) {
   return [
     { label: 'Total', value: tasks.length, icon: ListTodo },
     { label: 'Pendientes', value: countByStatus('PENDING'), icon: CircleDashed },
-    { label: 'En progreso', value: countByStatus('IN_PROGRESS'), icon: Loader },
+    // "En progreso" incluye las tareas en revisión: siguen abiertas y no deben desaparecer de los KPIs.
+    { label: 'En progreso', value: countByStatus('IN_PROGRESS') + countByStatus('IN_REVIEW'), icon: Loader },
     { label: 'Completadas', value: countByStatus('COMPLETED'), icon: CheckCircle2 },
     { label: 'Vencidas', value: tasks.filter(isOverdue).length, icon: AlertTriangle },
   ]

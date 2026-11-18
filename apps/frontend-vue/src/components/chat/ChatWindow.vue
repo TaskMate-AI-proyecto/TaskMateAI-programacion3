@@ -24,13 +24,13 @@ const messages = computed(() => props.thread?.messages ?? [])
 
 <template>
   <section aria-label="Conversación con TaskMate AI" class="glass-card flex min-h-[32rem] flex-col gap-4 p-5">
-    <header class="flex items-center gap-3 border-b border-white/10 pb-4">
+    <header class="flex items-center gap-3 border-b border-glass/10 pb-4">
       <span class="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 shadow-[0_0_20px_-4px_rgba(139,92,246,0.8)]">
         <Bot :size="20" />
       </span>
       <div>
         <p class="font-semibold text-slate-100">TaskMate AI</p>
-        <p class="flex items-center gap-1.5 text-xs text-emerald-300">
+        <p class="flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-300">
           <span aria-hidden class="h-2 w-2 rounded-full bg-emerald-400" />
           Online
         </p>
@@ -57,7 +57,7 @@ const messages = computed(() => props.thread?.messages ?? [])
         v-for="chip in quickPrompts"
         :key="chip.label"
         :disabled="isSending"
-        class="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-200 backdrop-blur-xl transition hover:border-indigo-400/50 hover:bg-white/10 disabled:opacity-50"
+        class="rounded-full border border-glass/10 bg-glass/5 px-3 py-1.5 text-xs font-semibold text-slate-200 backdrop-blur-xl transition hover:border-indigo-400/50 hover:bg-glass/10 disabled:opacity-50"
         type="button"
         @click="emit('send', chip.prompt)"
       >

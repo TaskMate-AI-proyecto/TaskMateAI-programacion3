@@ -7,7 +7,8 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   DATABASE_URL: z.string().min(1),
   JWT_SECRET: z.string().min(1),
-  GEMINI_API_KEY: z.string().min(1),
+  GROQ_API_KEY: z.string().min(1),
+  GROQ_MODEL: z.string().min(1).default('openai/gpt-oss-120b'),
   // Lista separada por comas: cada frontend de desarrollo (React en 5173, Vue en 5174) necesita CORS.
   FRONTEND_URL: z.string().default('http://localhost:5173,http://localhost:5174'),
   SMTP_HOST: z.string().optional(),

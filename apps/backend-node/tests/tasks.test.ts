@@ -12,6 +12,9 @@ const prismaMock = vi.hoisted(() => ({
     deleteMany: vi.fn(),
   },
   category: { findFirst: vi.fn() },
+  // Gamificación: al completar una tarea se leen y guardan XP, racha y logros.
+  user: { findUnique: vi.fn(), update: vi.fn() },
+  userAchievement: { findMany: vi.fn(), createMany: vi.fn() },
 }));
 
 vi.mock('../src/lib/prisma', () => ({ default: prismaMock }));
@@ -52,7 +55,11 @@ describe('rutas de tareas', () => {
       expect(response.statusCode).toBe(200);
       expect(response.json()).toEqual([storedTask]);
       expect(prismaMock.task.findMany.mock.calls[0][0].where).toEqual({
-        userId: testUser.id,
+        OR: [
+          { userId: testUser.id },
+          { assignedUsers: { some: { id: testUser.id } } },
+          { workspace: { is: { members: { some: { userId: testUser.id } } } } },
+        ],
         categoryId: 'cat-1',
         status: { not: Status.COMPLETED },
       });
@@ -79,7 +86,11 @@ describe('rutas de tareas', () => {
       expect(response.json()).toEqual(storedTask);
       expect(prismaMock.task.findFirst.mock.calls[0][0].where).toEqual({
         id: 'task-1',
-        userId: testUser.id,
+        OR: [
+          { userId: testUser.id },
+          { assignedUsers: { some: { id: testUser.id } } },
+          { workspace: { is: { members: { some: { userId: testUser.id } } } } },
+        ],
       });
     });
 
@@ -142,6 +153,7 @@ describe('rutas de tareas', () => {
         title: 'Estudiar',
         categoryId: 'cat-1',
         userId: testUser.id,
+        assignedUsers: { connect: [] },
       });
     });
   });
@@ -170,6 +182,23 @@ describe('rutas de tareas', () => {
 
       expect(response.statusCode).toBe(404);
       expect(prismaMock.task.update).not.toHaveBeenCalled();
+    });
+
+    it('acepta el estado en revisión que usa el tablero Kanban', async () => {
+      prismaMock.task.findFirst.mockResolvedValue(storedTask);
+      prismaMock.task.update.mockResolvedValue({ ...storedTask, status: Status.IN_REVIEW });
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: '/api/tasks/task-1',
+        headers,
+        payload: { status: Status.IN_REVIEW },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(prismaMock.task.update.mock.calls[0][0].data).toMatchObject({
+        status: Status.IN_REVIEW,
+      });
     });
 
     it('actualiza solo los campos enviados', async () => {

@@ -9,6 +9,7 @@ datasource db {
 enum Status {
   PENDING
   IN_PROGRESS
+  IN_REVIEW
   COMPLETED
 }
 
@@ -18,15 +19,51 @@ enum Priority {
   HIGH
 }
 
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
+  // Identificador público para buscar y agregar amigos, p. ej. @santi_8f9a2c.
+  uniqueTag String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tasks             Task[]
-  categories        Category[]
-  verificationCodes VerificationCode[]
+  // Gamificación: XP acumulado, nivel derivado del XP y rachas de días con tareas completadas.
+  xp                  Int       @default(0)
+  level               Int       @default(1)
+  currentStreak       Int       @default(0)
+  longestStreak       Int       @default(0)
+  lastTaskCompletedAt DateTime?
+
+  tasks                Task[]
+  categories           Category[]
+  verificationCodes    VerificationCode[]
+  sentMessages         Message[]          @relation("SentMessages")
+  receivedMessages     Message[]          @relation("ReceivedMessages")
+  sentFriendships      Friendship[]       @relation("FriendshipSender")
+  receivedFriendships  Friendship[]       @relation("FriendshipReceiver")
+  assignedTasks        Task[]             @relation("TaskCollaborators")
+  ownedWorkspaces      Workspace[]        @relation("WorkspaceOwner")
+  workspaceMemberships WorkspaceMember[]
+  achievements         UserAchievement[]
+}
+
+// Logro desbloqueado por un usuario. badgeKey apunta al catálogo de gamification.service.ts.
+model UserAchievement {
+  id         String   @id @default(uuid())
+  userId     String
+  badgeKey   String
+  unlockedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeKey])
 }
 
 model VerificationCode {
@@ -38,7 +75,7 @@ model VerificationCode {
   createdAt DateTime @default(now())
   userId    String?
 
-  user User? @relation(fields: [userId], references: [id])
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([email, code], name: "idx_verification_email_code")
 }
@@ -50,7 +87,7 @@ model Category {
   userId    String
   createdAt DateTime @default(now())
 
-  user  User   @relation(fields: [userId], references: [id])
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   tasks Task[]
 
   @@index([userId])
@@ -65,11 +102,88 @@ model Task {
   dueDate     DateTime?
   userId      String
   categoryId  String?
+  // Espacio compartido al que pertenece la tarea (opcional).
+  workspaceId String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  user     User      @relation(fields: [userId], references: [id])
-  category Category? @relation(fields: [categoryId], references: [id])
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category      Category?  @relation(fields: [categoryId], references: [id])
+  workspace     Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  // Amigos colaboradores: la tarea aparece también en sus listados.
+  assignedUsers User[]     @relation("TaskCollaborators")
 
   @@index([userId])
+  @@index([workspaceId])
+}
+
+// Espacio compartido (proyecto) con amigos. El dueño es también miembro con role OWNER.
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  icon      String   @default("folder")
+  color     String   @default("#6366F1")
+  ownerId   String
+  createdAt DateTime @default(now())
+
+  owner    User              @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members  WorkspaceMember[]
+  tasks    Task[]
+  messages Message[]
+}
+
+enum WorkspaceRole {
+  OWNER
+  MEMBER
+}
+
+model WorkspaceMember {
+  workspaceId String
+  userId      String
+  role        WorkspaceRole @default(MEMBER)
+  joinedAt    DateTime      @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, userId])
+  @@unique([workspaceId, userId])
+  @@index([userId])
+}
+
+// Mensaje directo entre dos usuarios (receiverId) o mensaje del canal grupal de un espacio (workspaceId, sin receiverId).
+// readAt se rellena cuando el destinatario abre la conversación.
+model Message {
+  id          String    @id @default(cuid())
+  senderId    String
+  receiverId  String?
+  workspaceId String?
+  content     String
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  sender    User       @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver  User?      @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([receiverId, readAt])
+  @@index([senderId, receiverId, createdAt])
+  @@index([workspaceId, createdAt])
+}
+
+// Solicitud de amistad entre dos usuarios. Una solicitud PENDING de más de 30 días pasa a EXPIRED.
+model Friendship {
+  id         String           @id @default(cuid())
+  senderId   String
+  receiverId String
+  status     FriendshipStatus @default(PENDING)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  sender   User @relation("FriendshipSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("FriendshipReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@index([receiverId, status])
+  @@index([senderId, status])
 }

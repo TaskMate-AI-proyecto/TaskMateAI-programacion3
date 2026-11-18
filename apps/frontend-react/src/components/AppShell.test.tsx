@@ -40,7 +40,7 @@ describe('AppShell', () => {
     expect(within(sidebar).getByRole('link', { name: 'Inicio' })).toHaveClass('nav-link-active')
     expect(within(sidebar).getByRole('link', { name: 'Tareas' })).not.toHaveClass('nav-link-active')
     expect(within(sidebar).getByRole('link', { name: 'Chat IA' })).toHaveAttribute('href', '/chat')
-    expect(within(sidebar).getByLabelText('Configuración')).toHaveAttribute('aria-disabled', 'true')
+    expect(within(sidebar).getByRole('link', { name: 'Ajustes' })).toHaveAttribute('href', '/settings')
     expect(screen.getByRole('navigation', { name: 'Pestañas principales' })).toBeInTheDocument()
     expect(screen.getByText('ana@example.com')).toBeInTheDocument()
     expect(screen.getByText('Contenido del panel')).toBeInTheDocument()

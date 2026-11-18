@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from src.config.env import settings
 from src.services.database import get_db, init_db
-from src.utils.errors import failure, get_gemini_error_response
+from src.utils.errors import failure, get_groq_error_response
 from src.utils.security import JWTPayload, create_access_token, verify_token
 
 
@@ -54,7 +54,7 @@ class TestErrorMapping:
         assert failure(400, "Malo") == {"success": False, "message": "Malo"}
 
     def test_invalid_key_message_maps_to_400(self):
-        status, message = get_gemini_error_response(Exception("API key not valid. Please pass a valid key"))
+        status, message = get_groq_error_response(Exception("API key not valid. Please pass a valid key"))
 
         assert status == 400
         assert "no es válida" in message
@@ -63,7 +63,7 @@ class TestErrorMapping:
         error = Exception("forbidden")
         error.status_code = 403
 
-        assert get_gemini_error_response(error)[0] == 400
+        assert get_groq_error_response(error)[0] == 400
 
     def test_rate_limit_and_unavailable_keep_their_status(self):
         rate_limited = Exception("rate")
@@ -71,11 +71,11 @@ class TestErrorMapping:
         unavailable = Exception("down")
         unavailable.status_code = 503
 
-        assert get_gemini_error_response(rate_limited)[0] == 429
-        assert get_gemini_error_response(unavailable)[0] == 503
+        assert get_groq_error_response(rate_limited)[0] == 429
+        assert get_groq_error_response(unavailable)[0] == 503
 
     def test_unknown_error_maps_to_500(self):
-        status, message = get_gemini_error_response(Exception("algo raro"))
+        status, message = get_groq_error_response(Exception("algo raro"))
 
         assert status == 500
         assert "No se pudo completar" in message

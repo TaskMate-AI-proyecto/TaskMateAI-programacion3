@@ -1,7 +1,8 @@
 import type { FormEvent } from 'react'
-import { ArrowRight, Mail, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Mail } from 'lucide-react'
 import { IconField } from '../ui/IconField'
-import { fieldClass } from '../ui/fieldClass'
+import { GlassyOTP } from './GlassyOTP'
+import type { OtpStatus } from './otpInput'
 
 interface SubmitButtonProps {
   isBusy: boolean
@@ -34,7 +35,7 @@ export function OtpEmailStep({ isRegister, name, email, isSubmitting, onNameChan
     <form className="space-y-4" onSubmit={onSubmit}>
       {isRegister && (
         <label className="block text-sm font-medium text-slate-300">Nombre
-          <input autoComplete="name" className={fieldClass} onChange={(event) => onNameChange(event.target.value)} required value={name} />
+          <input autoComplete="name" className="field" onChange={(event) => onNameChange(event.target.value)} required value={name} />
         </label>
       )}
       <IconField autoComplete="email" icon={Mail} label="Correo electrónico" onChange={(event) => onEmailChange(event.target.value)} required type="email" value={email} />
@@ -44,19 +45,21 @@ export function OtpEmailStep({ isRegister, name, email, isSubmitting, onNameChan
 }
 
 interface OtpCodeStepProps {
-  code: string
-  isSubmitting: boolean
-  onCodeChange: (value: string) => void
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void
+  status: OtpStatus
+  onChange: (code: string) => void
+  onComplete: (code: string) => void
+  onSuccessDone: () => void
   onBack: () => void
 }
 
-export function OtpCodeStep({ code, isSubmitting, onCodeChange, onSubmit, onBack }: OtpCodeStepProps) {
+// Paso 2: el código se verifica en cuanto se completan las seis casillas.
+export function OtpCodeStep({ status, onChange, onComplete, onSuccessDone, onBack }: OtpCodeStepProps) {
+  const busy = status === 'verifying' || status === 'success'
+
   return (
-    <form className="space-y-4" onSubmit={onSubmit}>
-      <IconField className="tracking-[0.35em]" icon={ShieldCheck} inputMode="numeric" label="Código de verificación" maxLength={6} onChange={(event) => onCodeChange(event.target.value.replace(/\D/g, ''))} pattern="\d{6}" required value={code} />
-      <SubmitButton busyLabel="Verificando..." disabled={code.length !== 6} isBusy={isSubmitting} label="Verificar y continuar" />
-      <button className="text-link text-sm" onClick={onBack} type="button">Cambiar correo</button>
-    </form>
+    <div className="space-y-5">
+      <GlassyOTP onChange={onChange} onComplete={onComplete} onSuccessDone={onSuccessDone} status={status} />
+      <button className="text-link text-sm disabled:opacity-50" disabled={busy} onClick={onBack} type="button">Cambiar correo</button>
+    </div>
   )
 }

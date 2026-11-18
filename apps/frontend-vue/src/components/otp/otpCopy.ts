@@ -24,7 +24,7 @@ export const authCopy: Record<AuthMode, { eyebrow: string; email: StepCopy }> = 
   },
 }
 
-export const switchCopy: Record<AuthMode, { question: string; label: string; to: string }> = {
-  login: { question: '¿Es tu primera vez?', label: 'Regístrate', to: '/register' },
-  register: { question: '¿Ya tienes una cuenta?', label: 'Inicia sesión', to: '/login' },
+export const switchCopy: Record<AuthMode, { question: string; label: string }> = {
+  login: { question: '¿Es tu primera vez?', label: 'Regístrate' },
+  register: { question: '¿Ya tienes una cuenta?', label: 'Inicia sesión' },
 }

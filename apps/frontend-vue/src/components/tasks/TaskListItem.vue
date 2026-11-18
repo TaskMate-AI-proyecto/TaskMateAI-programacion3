@@ -3,6 +3,7 @@ import { Check } from 'lucide-vue-next'
 import type { Task } from '../../types/api'
 import { formatDueDate, isOverdue, priorityLabels, priorityStyles } from '../../utils/taskUtils'
 import Badge from '../ui/Badge.vue'
+import CollaborativeBadge from './CollaborativeBadge.vue'
 
 interface Props {
   task: Task
@@ -48,6 +49,8 @@ function completionLabel(title: string, isDone: boolean) {
     >
       {{ task.title }}
     </span>
+
+    <CollaborativeBadge :users="task.assignedUsers" />
 
     <span v-if="task.dueDate" :class="['text-xs', isOverdue(task) ? 'font-semibold text-coral' : 'text-slate-400']">
       {{ formatDueDate(task.dueDate) }}

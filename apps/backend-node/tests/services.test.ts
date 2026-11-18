@@ -2,15 +2,27 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { failure, getUserId } from '../src/lib/http';
 import { readProperty } from '../src/lib/objects';
-import { generateChatReply, generateDailySummary, generateSubtasks } from '../src/services/gemini';
+import { generateChatReply, generateDailySummary, generateSubtasks } from '../src/services/groq';
 
-const generateContent = vi.hoisted(() => vi.fn());
+const fetchMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@google/genai', () => ({
-  GoogleGenAI: class {
-    models = { generateContent };
-  },
-}));
+// Respuesta de chat completions de Groq con el texto indicado.
+function completion(text: string) {
+  return new Response(JSON.stringify({ choices: [{ message: { content: text } }] }), {
+    status: 200,
+  });
+}
+
+// Prompt enviado en la llamada n-ésima a Groq.
+function sentPrompt(call: number) {
+  const init = fetchMock.mock.calls[call][1] as RequestInit;
+  const body: { messages: { content: string }[] } = JSON.parse(String(init.body));
+
+  // El último mensaje es el del usuario; un mensaje de sistema puede ir antes.
+  return body.messages[body.messages.length - 1].content;
+}
+
+vi.stubGlobal('fetch', fetchMock);
 
 describe('lib/objects', () => {
   it('readProperty lee propiedades solo de objetos', () => {
@@ -37,63 +49,63 @@ describe('lib/http', () => {
   });
 });
 
-describe('services/gemini', () => {
+describe('services/groq', () => {
   afterEach(() => {
     vi.useRealTimers();
   });
 
   it('generateSubtasks interpreta JSON envuelto en un bloque de código', async () => {
-    generateContent.mockResolvedValue({
-      text: '```json\n{"subtasks":[" Leer ","Resumir","Repasar"]}\n```',
-    });
+    fetchMock.mockResolvedValue(
+      completion('```json\n{"subtasks":[" Leer ","Resumir","Repasar"]}\n```'),
+    );
 
     await expect(generateSubtasks('Estudiar', 'Parcial')).resolves.toEqual([
       'Leer',
       'Resumir',
       'Repasar',
     ]);
-    expect(generateContent.mock.calls[0][0].contents).toContain('Descripción: Parcial');
+    expect(sentPrompt(0)).toContain('Descripción: Parcial');
   });
 
   it('generateSubtasks rechaza una cantidad de subtareas fuera de rango', async () => {
-    generateContent.mockResolvedValue({ text: '{"subtasks":["Una","Dos"]}' });
+    fetchMock.mockResolvedValue(completion('{"subtasks":["Una","Dos"]}'));
 
     await expect(generateSubtasks('Estudiar')).rejects.toThrow('formato inválido');
   });
 
-  it('reintenta ante errores transitorios de Gemini', async () => {
+  it('reintenta ante errores transitorios de Groq', async () => {
     vi.useFakeTimers();
-    generateContent
-      .mockRejectedValueOnce({ status: 503 })
-      .mockResolvedValueOnce({ text: '{"subtasks":["A","B","C"]}' });
+    fetchMock
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(completion('{"subtasks":["A","B","C"]}'));
 
     const result = generateSubtasks('Estudiar');
     await vi.runAllTimersAsync();
 
     await expect(result).resolves.toEqual(['A', 'B', 'C']);
-    expect(generateContent).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('no reintenta errores no transitorios', async () => {
-    generateContent.mockRejectedValue({ status: 400 });
+    fetchMock.mockResolvedValue(new Response('', { status: 400 }));
 
-    await expect(generateSubtasks('Estudiar')).rejects.toEqual({ status: 400 });
-    expect(generateContent).toHaveBeenCalledTimes(1);
+    await expect(generateSubtasks('Estudiar')).rejects.toMatchObject({ status: 400 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('generateDailySummary informa cuando no hay tareas y falla ante respuestas vacías', async () => {
-    generateContent.mockResolvedValueOnce({ text: '  Día tranquilo.  ' });
+    fetchMock.mockResolvedValueOnce(completion('  Día tranquilo.  '));
 
     await expect(generateDailySummary([])).resolves.toBe('Día tranquilo.');
-    expect(generateContent.mock.calls[0][0].contents).toContain('No hay tareas pendientes.');
+    expect(sentPrompt(0)).toContain('No hay tareas pendientes.');
 
-    generateContent.mockResolvedValueOnce({ text: '   ' });
+    fetchMock.mockResolvedValueOnce(completion('   '));
 
     await expect(generateDailySummary([])).rejects.toThrow('resumen vacío');
   });
 
   it('generateChatReply envía la conversación y las tareas, y devuelve la respuesta sin espacios', async () => {
-    generateContent.mockResolvedValue({ text: '  Divídela en pasos.  ' });
+    fetchMock.mockResolvedValue(completion('  Divídela en pasos.  '));
 
     await expect(
       generateChatReply(
@@ -103,7 +115,7 @@ describe('services/gemini', () => {
       ),
     ).resolves.toBe('Divídela en pasos.');
 
-    const prompt = generateContent.mock.calls[0][0].contents as string;
+    const prompt = sentPrompt(0);
     expect(prompt).toContain('- [task-1] Entregar | prioridad: HIGH | vence: sin fecha');
     expect(prompt).toContain('[COMMAND]{"action":"CREATE_TASK"');
     expect(prompt).toContain('Usuario: Hola');
@@ -111,15 +123,15 @@ describe('services/gemini', () => {
   });
 
   it('generateChatReply omite la conversación previa cuando no existe y falla ante respuestas vacías', async () => {
-    generateContent.mockResolvedValueOnce({ text: 'Hola.' });
+    fetchMock.mockResolvedValueOnce(completion('Hola.'));
 
     await generateChatReply('Hola', [], []);
 
-    const prompt = generateContent.mock.calls[0][0].contents as string;
+    const prompt = sentPrompt(0);
     expect(prompt).not.toContain('Conversación previa');
     expect(prompt).toContain('No hay tareas pendientes.');
 
-    generateContent.mockResolvedValueOnce({ text: '   ' });
+    fetchMock.mockResolvedValueOnce(completion('   '));
 
     await expect(generateChatReply('Hola', [], [])).rejects.toThrow('respuesta vacía');
   });

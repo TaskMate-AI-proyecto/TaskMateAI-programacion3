@@ -1,7 +1,5 @@
-from datetime import datetime
-from uuid import uuid4
 
-from sqlalchemy import Column, DateTime, String, Boolean, func, ForeignKey
+from sqlalchemy import Column, DateTime, String, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 
 from .base import Base, BaseModel

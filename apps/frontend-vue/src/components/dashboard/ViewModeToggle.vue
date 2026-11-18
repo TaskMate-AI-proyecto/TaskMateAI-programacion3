@@ -1,0 +1,31 @@
+<script setup lang="ts">
+import type { ViewMode } from '../../composables/useViewMode'
+
+defineProps<{ modelValue: ViewMode }>()
+const emit = defineEmits<{ 'update:modelValue': [mode: ViewMode] }>()
+
+const options: { value: ViewMode; label: string }[] = [
+  { value: 'list', label: 'Lista' },
+  { value: 'kanban', label: 'Kanban' },
+]
+
+const optionClass = 'rounded-full px-4 py-1.5 text-xs font-semibold transition'
+const optionActive = 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-[0_0_14px_-4px_rgba(139,92,246,0.7)]'
+const optionIdle = 'text-slate-300 hover:text-slate-100'
+</script>
+
+<template>
+  <!-- Interruptor glassy [Lista | Kanban] para elegir cómo se muestran las tareas del Dashboard. -->
+  <div aria-label="Vista de tareas" class="inline-flex gap-1 rounded-full border border-white/10 bg-white/5 p-1 backdrop-blur-xl" role="group">
+    <button
+      v-for="option in options"
+      :key="option.value"
+      :aria-pressed="modelValue === option.value"
+      :class="[optionClass, modelValue === option.value ? optionActive : optionIdle]"
+      type="button"
+      @click="emit('update:modelValue', option.value)"
+    >
+      {{ option.label }}
+    </button>
+  </div>
+</template>

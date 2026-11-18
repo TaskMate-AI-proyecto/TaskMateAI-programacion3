@@ -1,6 +1,6 @@
 # Sistema completo de TaskMate AI en un solo comando:
 #   docker compose up -d --build --wait
-# Requiere un archivo .env en la raíz (ver .env.example): JWT_SECRET y GEMINI_API_KEY son obligatorios.
+# Requiere un archivo .env en la raíz (ver .env.example): JWT_SECRET y GROQ_API_KEY son obligatorios.
 
 services:
   db:
@@ -61,7 +61,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-taskmate_db}
       PORT: 3000
       JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env}
-      GEMINI_API_KEY: ${GEMINI_API_KEY:?Define GEMINI_API_KEY en .env}
+      GROQ_API_KEY: ${GROQ_API_KEY:?Define GROQ_API_KEY en .env}
+      GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-120b}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173,http://localhost:5174}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
@@ -83,8 +84,10 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/taskmate_python
       PORT: 8000
+      NODE_API_URL: http://backend:3000
       JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env}
-      GEMINI_API_KEY: ${GEMINI_API_KEY:?Define GEMINI_API_KEY en .env}
+      GROQ_API_KEY: ${GROQ_API_KEY:?Define GROQ_API_KEY en .env}
+      GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-120b}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173,http://localhost:5174}
     depends_on:
       db-init:
@@ -96,6 +99,7 @@ services:
       context: ./apps/frontend-react
       args:
         VITE_API_BASE_URL: http://localhost:3001
+        VITE_PYTHON_API_BASE_URL: http://localhost:8000
     ports:
       - "5173:8080"
     depends_on:
@@ -108,6 +112,7 @@ services:
       context: ./apps/frontend-vue
       args:
         VITE_API_BASE_URL: http://localhost:3001
+        VITE_PYTHON_API_BASE_URL: http://localhost:8000
     ports:
       - "5174:8080"
     depends_on:

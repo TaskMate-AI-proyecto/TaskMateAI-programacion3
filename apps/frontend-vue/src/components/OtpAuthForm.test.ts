@@ -33,6 +33,18 @@ async function submitEmail(wrapper: VueWrapper, email: string) {
   await flushPromises()
 }
 
+function codeBoxes(wrapper: VueWrapper) {
+  return wrapper.findAll('input[aria-label^="Dígito"]')
+}
+
+// Escribe el código casilla por casilla, como lo haría el usuario.
+async function typeCode(wrapper: VueWrapper, code: string) {
+  for (const [index, char] of [...code].entries()) {
+    await codeBoxes(wrapper)[index].setValue(char)
+  }
+  await flushPromises()
+}
+
 describe('OtpAuthForm (login en dos pasos)', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -44,11 +56,11 @@ describe('OtpAuthForm (login en dos pasos)', () => {
     const { wrapper } = await renderForm('login')
 
     expect(heading(wrapper)).toBe('Bienvenido de nuevo.')
-    expect(wrapper.find('input[autocomplete="one-time-code"]').exists()).toBe(false)
+    expect(wrapper.find('input[aria-label^="Dígito"]').exists()).toBe(false)
     expect(wrapper.find('input[autocomplete="name"]').exists()).toBe(false)
   })
 
-  it('pide el código y pasa al paso de verificación con el aviso de envío', async () => {
+  it('pide el código y pasa al paso de verificación con seis casillas', async () => {
     vi.mocked(sendOtp).mockResolvedValue(undefined)
     const { wrapper } = await renderForm('login')
 
@@ -57,40 +69,37 @@ describe('OtpAuthForm (login en dos pasos)', () => {
     expect(sendOtp).toHaveBeenCalledWith('ana@example.com')
     expect(heading(wrapper)).toBe('Revisa tu correo.')
     expect(wrapper.text()).toContain('Enviamos un código de seis dígitos a ana@example.com.')
+    expect(codeBoxes(wrapper)).toHaveLength(6)
   })
 
-  it('mantiene deshabilitado el botón de verificar hasta tener seis dígitos', async () => {
-    vi.mocked(sendOtp).mockResolvedValue(undefined)
-    const { wrapper } = await renderForm('login')
-    await submitEmail(wrapper, 'ana@example.com')
-    const verify = () => wrapper.get('button[type="submit"]')
-
-    expect(verify().attributes('disabled')).toBeDefined()
-
-    await wrapper.get('input[autocomplete="one-time-code"]').setValue('12345')
-    expect(verify().attributes('disabled')).toBeDefined()
-
-    await wrapper.get('input[autocomplete="one-time-code"]').setValue('123456')
-    expect(verify().attributes('disabled')).toBeUndefined()
-  })
-
-  it('verifica el código, guarda la sesión y entra al panel', async () => {
+  it('verifica automáticamente al completar las seis casillas, guarda la sesión y entra al panel', async () => {
     vi.mocked(sendOtp).mockResolvedValue(undefined)
     vi.mocked(verifyOtp).mockResolvedValue(session)
     const { wrapper, router } = await renderForm('login')
     await submitEmail(wrapper, 'ana@example.com')
-    await wrapper.get('input[autocomplete="one-time-code"]').setValue('123456')
 
-    await wrapper.get('form').trigger('submit')
-    await flushPromises()
+    await typeCode(wrapper, '123456')
 
     expect(verifyOtp).toHaveBeenCalledWith('ana@example.com', '123456')
+    await vi.waitFor(() => expect(router.currentRoute.value.path).toBe('/dashboard'), { timeout: 3000 })
     expect(useAuthStore().isAuthenticated).toBe(true)
     expect(localStorage.getItem(tokenKey)).toBe('jwt-token')
-    expect(router.currentRoute.value.path).toBe('/dashboard')
   })
 
-  it('muestra el error del servidor cuando no puede enviar el código', async () => {
+  it('muestra el error del servidor, vacía las casillas y no inicia sesión si el código es rechazado', async () => {
+    vi.mocked(sendOtp).mockResolvedValue(undefined)
+    vi.mocked(verifyOtp).mockRejectedValue(new Error('invalid'))
+    const { wrapper } = await renderForm('login')
+    await submitEmail(wrapper, 'ana@example.com')
+
+    await typeCode(wrapper, '000000')
+
+    expect(wrapper.get('[aria-live="polite"]').text()).toBe('No se pudo completar la solicitud.')
+    expect(codeBoxes(wrapper).map((box) => (box.element as HTMLInputElement).value)).toEqual(['', '', '', '', '', ''])
+    expect(useAuthStore().isAuthenticated).toBe(false)
+  })
+
+  it('muestra el error y se queda en el paso de correo si no puede enviar el código', async () => {
     vi.mocked(sendOtp).mockRejectedValue(new Error('caído'))
     const { wrapper } = await renderForm('login')
 
@@ -98,20 +107,6 @@ describe('OtpAuthForm (login en dos pasos)', () => {
 
     expect(wrapper.get('[aria-live="polite"]').text()).toBe('No se pudo completar la solicitud.')
     expect(heading(wrapper)).toBe('Bienvenido de nuevo.')
-  })
-
-  it('muestra el error cuando el código es rechazado y no inicia sesión', async () => {
-    vi.mocked(sendOtp).mockResolvedValue(undefined)
-    vi.mocked(verifyOtp).mockRejectedValue(new Error('invalid'))
-    const { wrapper } = await renderForm('login')
-    await submitEmail(wrapper, 'ana@example.com')
-    await wrapper.get('input[autocomplete="one-time-code"]').setValue('000000')
-
-    await wrapper.get('form').trigger('submit')
-    await flushPromises()
-
-    expect(wrapper.find('[aria-live="polite"]').exists()).toBe(true)
-    expect(useAuthStore().isAuthenticated).toBe(false)
   })
 
   it('vuelve al correo con el botón "Cambiar correo"', async () => {

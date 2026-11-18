@@ -35,7 +35,7 @@ const analyzed = computed(() => props.pending.slice(0, analyzedLimit))
     </div>
 
     <div aria-label="Métricas del contexto" class="grid grid-cols-3 gap-2" role="group">
-      <div v-for="metric in metrics" :key="metric.label" class="rounded-2xl border border-white/10 bg-white/5 p-3">
+      <div v-for="metric in metrics" :key="metric.label" class="rounded-2xl border border-glass/10 bg-glass/5 p-3">
         <p class="font-display text-2xl font-semibold text-slate-100">{{ metric.value }}</p>
         <p class="text-xs text-slate-400">{{ metric.label }}</p>
       </div>
@@ -50,7 +50,7 @@ const analyzed = computed(() => props.pending.slice(0, analyzedLimit))
       <ul v-else class="space-y-2">
         <li v-for="task in analyzed" :key="task.id">
           <RouterLink
-            class="flex items-center justify-between gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 transition hover:bg-white/10"
+            class="flex items-center justify-between gap-2 rounded-2xl border border-glass/10 bg-glass/5 px-3 py-2 transition hover:bg-glass/10"
             to="/dashboard"
           >
             <span class="min-w-0 truncate text-sm text-slate-100">{{ task.title }}</span>

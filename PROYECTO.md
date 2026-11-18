@@ -40,7 +40,7 @@ Notas de diseño:
 - **Dos bases en el mismo Postgres.** El backend Node usa Prisma sobre `taskmate_db`; el backend Python usa SQLAlchemy sobre `taskmate_python`. Así no comparten tablas ni migraciones.
 - **Frontends y API.** La URL del API se incrusta en el bundle al construir la imagen (`VITE_API_BASE_URL`, por defecto `http://localhost:3001`). Si cambia, hay que reconstruir los frontends.
 - **CORS.** Ambos backends aceptan los orígenes de `FRONTEND_URL` (lista separada por comas).
-- **Estado del backend Python en esta rama.** Expone `/health`, `/` y `POST /api/ai/chat` (que requiere JWT y Gemini). No tiene aún rutas de autenticación ni CRUD de tareas: los frontends solo consumen Node.
+- **Estado del backend Python en esta rama.** Expone `/health`, `/` y `POST /api/ai/chat` (que requiere JWT y Groq). No tiene aún rutas de autenticación ni CRUD de tareas: los frontends solo consumen Node.
 
 ## 2. Puertos de acceso
 
@@ -59,7 +59,7 @@ Archivo `.env` en la raíz (plantilla: `.env.example`). Docker Compose lo lee au
 | Variable | Obligatoria | Uso |
 |---|---|---|
 | `JWT_SECRET` | sí | Firma de los JWT. Node y Python la comparten. |
-| `GEMINI_API_KEY` | sí | Clave de Gemini para el módulo de IA. |
+| `GROQ_API_KEY` | sí | Clave de Groq para el módulo de IA. |
 | `POSTGRES_USER` | no (`postgres`) | Usuario de Postgres y de las conexiones. |
 | `POSTGRES_PASSWORD` | no (`postgres`) | Contraseña de Postgres. |
 | `POSTGRES_DB` | no (`taskmate_db`) | Base del backend Node. |
@@ -69,7 +69,7 @@ Archivo `.env` en la raíz (plantilla: `.env.example`). Docker Compose lo lee au
 Variables que Compose fija por servicio (no hay que definirlas en `.env`): `DATABASE_URL`, `PORT`, `ENVIRONMENT` del backend Python (`production`).
 Build args de los frontends: `VITE_API_BASE_URL`.
 
-Sin `.env`, Compose no arranca: `JWT_SECRET` y `GEMINI_API_KEY` usan `${VAR:?...}`.
+Sin `.env`, Compose no arranca: `JWT_SECRET` y `GROQ_API_KEY` usan `${VAR:?...}`.
 
 ## 4. Ejecución
 
@@ -188,11 +188,11 @@ Fecha de las pruebas: 2026-11-06. Salvo la fila de ejecución local, todas se ej
 | Tests del backend Python (`pytest`) | 57 pasan. Cobertura 99 %. |
 | Tests del frontend Vue (`vitest`) y lint | 97 pasan (17 archivos). Lint sin errores. Build con `vue-tsc` correcto. |
 
-Datos de prueba: las tareas y el usuario de verificación se eliminaron tras cada prueba. Las pruebas no llamaron a Gemini ni enviaron correos.
+Datos de prueba: las tareas y el usuario de verificación se eliminaron tras cada prueba. Las pruebas no llamaron a Groq ni enviaron correos.
 
 ## 6. Límites conocidos
 
-- **Chat con IA sin prueba de extremo a extremo.** La ruta `POST /api/ai/chat` está comprobada en su autenticación, pero no se ejecutó con Gemini real para no consumir cuota.
+- **Chat con IA sin prueba de extremo a extremo.** La ruta `POST /api/ai/chat` está comprobada en su autenticación, pero no se ejecutó con Groq real para no consumir cuota.
 - **Envío de códigos.** Requiere SMTP configurado. Sin él, el flujo de acceso por correo no puede completarse; la verificación de la base se hizo insertando el código directamente.
 - **Rutas de autenticación.** El README define `/api/v1/auth/otp/request` y `/api/v1/auth/otp/verify`. El backend Node implementa y los frontends usan `POST /api/auth/send-code` y `POST /api/auth/verify-code`. Son las rutas vigentes en esta versión; el README debe actualizarse.
 - **Python sin CRUD de tareas.** Ver la sección 1. Los frontends no lo usan en esta rama.

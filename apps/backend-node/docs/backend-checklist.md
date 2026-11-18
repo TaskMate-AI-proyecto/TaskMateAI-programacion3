@@ -13,6 +13,6 @@
 
 ## Antes de fusionar
 
-- [ ] Configurar secretos reales de producción para `JWT_SECRET`, `GEMINI_API_KEY` y SMTP.
+- [ ] Configurar secretos reales de producción para `JWT_SECRET`, `GROQ_API_KEY` y SMTP.
 - [ ] Configurar `FRONTEND_URL` con el dominio del cliente desplegado.
 - [ ] Ejecutar `docker compose up --build` en el entorno de destino.
