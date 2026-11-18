@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export type ToastKind = 'success' | 'error'
+// reward: XP ganado al completar una tarea. achievement: logro nuevo desbloqueado.
+export type ToastKind = 'success' | 'error' | 'reward' | 'achievement'
 
 export interface Toast {
   id: number

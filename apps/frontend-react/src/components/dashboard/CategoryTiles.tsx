@@ -12,7 +12,7 @@ function CategoryTile({ category, pending }: { category: Category; pending: numb
   return (
     <motion.li whileHover={{ y: -5 }} transition={{ type: 'spring', stiffness: 320, damping: 22 }}>
       <Link
-        className="flex h-full flex-col justify-between gap-6 rounded-2xl border border-white/15 p-4 text-white shadow-[0_12px_30px_-12px_rgba(0,0,0,0.6)]"
+        className="flex h-full flex-col justify-between gap-6 rounded-2xl border border-glass/15 p-4 text-white shadow-[0_12px_30px_-12px_rgba(0,0,0,0.6)]"
         style={{ background: `linear-gradient(135deg, ${category.color}, #1e1b4b)` }}
         to="/tasks"
       >

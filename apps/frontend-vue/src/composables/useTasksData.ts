@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { computed, ref, type Ref } from 'vue'
 import { getTasks, toggleTaskStatus } from '../api/tasksApi'
 import { getCategories } from '../api/categoriesApi'
 import { getApiErrorMessage } from '../api/errors'
@@ -6,25 +6,33 @@ import type { Category, Task, TaskPriority } from '../types/api'
 
 export type PriorityFilter = TaskPriority | 'ALL'
 
-export function useTasksData() {
+// El filtro de categoría es opcional y reactivo: cuando cambia, la siguiente carga pide sólo esas tareas.
+// El espacio activo también es reactivo: cambiarlo cambia la siguiente carga (cadena vacía = todos).
+export function useTasksData(categoryId: Readonly<Ref<string>> = ref(''), workspaceId: Readonly<Ref<string>> = ref('')) {
   const tasks = ref<Task[]>([])
   const categories = ref<Category[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
-  async function loadAll() {
-    isLoading.value = true
-    error.value = null
-
+  // Trae tareas y categorías sin tocar el estado de carga: lo usa el sondeo para no mostrar esqueletos.
+  async function refresh() {
     try {
-      const [loadedTasks, loadedCategories] = await Promise.all([getTasks(), getCategories()])
+      const [loadedTasks, loadedCategories] = await Promise.all([
+        getTasks({ categoryId: categoryId.value || undefined, workspaceId: workspaceId.value || undefined }),
+        getCategories(),
+      ])
       tasks.value = loadedTasks
       categories.value = loadedCategories
+      error.value = null
     } catch (err) {
       error.value = getApiErrorMessage(err, 'No se pudieron cargar las tareas.')
-    } finally {
-      isLoading.value = false
     }
+  }
+
+  async function loadAll() {
+    isLoading.value = true
+    await refresh()
+    isLoading.value = false
   }
 
   function updateTasks(fn: (tasks: Task[]) => Task[]) {
@@ -48,6 +56,7 @@ export function useTasksData() {
     isLoading: computed(() => isLoading.value),
     error: computed(() => error.value),
     loadAll,
+    refresh,
     updateTasks,
     handleToggle,
   }

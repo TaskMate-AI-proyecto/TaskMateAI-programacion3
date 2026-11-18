@@ -1,32 +1,35 @@
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { sendOtp, verifyOtp } from '../api/auth'
 import { getApiErrorMessage } from '../api/errors'
-import type { AuthResponse } from '../types/auth'
 import type { OtpStep } from '../components/otp/otpCopy'
-
-const codeLength = 6
+import type { OtpStatus } from '../components/otp/otpInput'
+import type { AuthResponse } from '../types/auth'
 
 interface OtpFlowOptions {
   onSession: (session: AuthResponse) => void
 }
 
-// Máquina de estados del login OTP: paso 1 pide el código por correo, paso 2 lo verifica.
+// Máquina de estados del login OTP: paso 1 pide el código por correo, paso 2 lo verifica con estados animados.
 export function useOtpFlow({ onSession }: OtpFlowOptions) {
   const name = ref('')
   const email = ref('')
-  const code = ref('')
   const step = ref<OtpStep>('email')
   const isSubmitting = ref(false)
   const message = ref<string | null>(null)
   const error = ref<string | null>(null)
-  const canVerify = computed(() => code.value.length === codeLength)
+  const otpStatus = ref<OtpStatus>('idle')
+  // La sesión se guarda al terminar la animación de éxito (completeLogin), no al recibirla.
+  let pendingSession: AuthResponse | null = null
 
-  async function run(action: () => Promise<void>) {
-    error.value = null
+  async function requestCode() {
     isSubmitting.value = true
+    error.value = null
 
     try {
-      await action()
+      message.value = null
+      await sendOtp(email.value)
+      step.value = 'code'
+      message.value = `Enviamos un código de seis dígitos a ${email.value}.`
     } catch (requestError) {
       error.value = getApiErrorMessage(requestError)
     } finally {
@@ -34,44 +37,47 @@ export function useOtpFlow({ onSession }: OtpFlowOptions) {
     }
   }
 
-  function requestCode() {
-    return run(async () => {
-      message.value = null
-      await sendOtp(email.value)
-      step.value = 'code'
-      message.value = `Enviamos un código de seis dígitos a ${email.value}.`
-    })
+  async function verifyCode(code: string) {
+    error.value = null
+    otpStatus.value = 'verifying'
+
+    try {
+      pendingSession = await verifyOtp(email.value, code)
+      otpStatus.value = 'success'
+    } catch (requestError) {
+      error.value = getApiErrorMessage(requestError)
+      otpStatus.value = 'error'
+    }
   }
 
-  function verifyCode() {
-    return run(async () => {
-      onSession(await verifyOtp(email.value, code.value))
-    })
+  function completeLogin() {
+    if (pendingSession) onSession(pendingSession)
+  }
+
+  // Al volver a escribir tras un error se vuelve a estado normal.
+  function resetOtpStatus() {
+    if (otpStatus.value === 'error') otpStatus.value = 'idle'
+    error.value = null
   }
 
   function backToEmail() {
     step.value = 'email'
-    code.value = ''
+    otpStatus.value = 'idle'
     error.value = null
-  }
-
-  // Sólo dígitos y como máximo seis, igual que el campo de la app React.
-  function setCode(value: string) {
-    code.value = value.replace(/\D/g, '').slice(0, codeLength)
   }
 
   return {
     name,
     email,
-    code,
     step,
     isSubmitting,
     message,
     error,
-    canVerify,
+    otpStatus,
     requestCode,
     verifyCode,
+    completeLogin,
+    resetOtpStatus,
     backToEmail,
-    setCode,
   }
 }

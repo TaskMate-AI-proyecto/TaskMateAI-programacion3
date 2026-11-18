@@ -2,6 +2,8 @@ import { MotionConfig } from 'framer-motion'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { ProtectedRoute, PublicOnlyRoute } from './components/ProtectedRoute'
+import { GamificationProvider } from './context/GamificationProvider'
+import { WorkspaceProvider } from './context/WorkspaceProvider'
 import { SmoothScrollProvider } from './context/SmoothScrollProvider'
 import { TaskSyncProvider } from './context/TaskSyncProvider'
 import { ToastProvider } from './context/ToastProvider'
@@ -9,6 +11,9 @@ import { ChatPage } from './pages/Chat'
 import { Dashboard } from './pages/Dashboard'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
+import { MessagesView } from './views/MessagesView'
+import { AchievementsView } from './views/AchievementsView'
+import { SettingsView } from './views/SettingsView'
 import { Tasks } from './pages/Tasks'
 
 export default function App() {
@@ -25,10 +30,13 @@ export default function App() {
                 <Route path="register" element={<Register />} />
               </Route>
               <Route element={<ProtectedRoute />}>
-                <Route element={<AppShell />}>
+                <Route element={<GamificationProvider><WorkspaceProvider><AppShell /></WorkspaceProvider></GamificationProvider>}>
                   <Route path="dashboard" element={<Dashboard />} />
                   <Route path="tasks" element={<Tasks />} />
                   <Route path="chat" element={<ChatPage />} />
+                  <Route path="messages" element={<MessagesView />} />
+                  <Route path="achievements" element={<AchievementsView />} />
+                  <Route path="settings" element={<SettingsView />} />
                 </Route>
               </Route>
               <Route path="*" element={<Navigate replace to="/login" />} />

@@ -1,17 +1,33 @@
-import { Bot, Home, ListTodo, Settings } from 'lucide-react'
+import { Bot, Home, ListTodo, MessageCircle, Search, Settings } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
+import { useCommandPalette } from '../../hooks/useCommandPalette'
 import { cn } from '../../utils/cn'
+import { StreakIndicator } from '../gamification/StreakIndicator'
+import { WorkspaceSidebar } from '../workspaces/WorkspaceSidebar'
 
 const navigation = [
   { label: 'Inicio', to: '/dashboard', icon: Home },
   { label: 'Tareas', to: '/tasks', icon: ListTodo },
+  { label: 'Mensajes', to: '/messages', icon: MessageCircle },
   { label: 'Chat IA', to: '/chat', icon: Bot },
+  { label: 'Ajustes', to: '/settings', icon: Settings },
 ]
 
-// Cápsula flotante con los accesos rápidos. Configuración aún no tiene pantalla: queda deshabilitada.
+// Cápsula flotante con los accesos rápidos a las secciones de la app.
 export function SidebarCapsule() {
+  const { open } = useCommandPalette()
+
   return (
-    <nav aria-label="Navegación principal" className="nav-capsule flex-row self-start md:sticky md:top-6 md:flex-col">
+    <nav aria-label="Navegación principal" className="nav-capsule flex-row self-start md:sticky md:top-6 md:flex-col md:w-[88px] md:px-2.5">
+      <button
+        aria-label="Buscar comandos"
+        className="nav-icon"
+        onClick={open}
+        title="Buscar comandos (Ctrl+K / ⌘K)"
+        type="button"
+      >
+        <Search size={20} />
+      </button>
       {navigation.map(({ label, to, icon: Icon }) => (
         <NavLink
           aria-label={label}
@@ -23,9 +39,8 @@ export function SidebarCapsule() {
           <Icon size={20} />
         </NavLink>
       ))}
-      <span aria-disabled="true" aria-label="Configuración" className="nav-icon cursor-not-allowed opacity-40" title="Configuración (próximamente)">
-        <Settings size={20} />
-      </span>
+      <StreakIndicator />
+      <WorkspaceSidebar />
     </nav>
   )
 }

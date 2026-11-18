@@ -11,8 +11,8 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 COPY requirements.txt .
-# pytest y httpx sólo sirven para las pruebas: no entran en la imagen.
-RUN grep -viE '^(pytest|httpx)' requirements.txt > requirements.runtime.txt \
+# pytest sólo sirve para las pruebas: no entra en la imagen (httpx sí, lo usa el cliente de Groq).
+RUN grep -viE '^pytest' requirements.txt > requirements.runtime.txt \
     && pip install -r requirements.runtime.txt
 
 # Etapa final: intérprete, entorno virtual y código de la aplicación, sin herramientas de build.

@@ -9,7 +9,12 @@ import prisma from './lib/prisma';
 import authRoutes from './routes/auth';
 import aiRoutes from './routes/ai';
 import categoryRoutes from './routes/categories';
+import messageRoutes from './routes/messages';
+import friendRoutes from './routes/friends';
+import gamificationRoutes from './routes/gamification';
+import userRoutes from './routes/users';
 import taskRoutes from './routes/tasks';
+import workspaceRoutes from './routes/workspaces';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -75,6 +80,11 @@ export async function buildApp({ logger = true }: { logger?: boolean } = {}) {
   app.register(aiRoutes);
   app.register(categoryRoutes);
   app.register(taskRoutes);
+  app.register(messageRoutes);
+  app.register(friendRoutes);
+  app.register(gamificationRoutes);
+  app.register(workspaceRoutes);
+  app.register(userRoutes);
   await app.register(fastifySwaggerUi, { routePrefix: '/docs' });
 
   return app;

@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
+import { generateUniqueTag } from '../lib/uniqueTag';
 import { failure } from '../lib/http';
 import { sendVerificationCode } from '../services/email';
 
@@ -77,7 +78,7 @@ export default async function authRoutes(app: FastifyInstance) {
       return transaction.user.upsert({
         where: { email },
         update: {},
-        create: { email },
+        create: { email, uniqueTag: generateUniqueTag(email) },
       });
     });
 
@@ -88,7 +89,7 @@ export default async function authRoutes(app: FastifyInstance) {
     return {
       success: true,
       token,
-      user: { id: user.id, email: user.email },
+      user: { id: user.id, email: user.email, uniqueTag: user.uniqueTag },
     };
   });
 }

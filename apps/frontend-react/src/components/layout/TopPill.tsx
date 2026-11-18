@@ -1,6 +1,9 @@
-import { LogOut } from 'lucide-react'
+import { LogOut, Users } from 'lucide-react'
+import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { cn } from '../../utils/cn'
+import { FriendsModal } from '../friends/FriendsModal'
+import { ThemeToggle } from './ThemeToggle'
 
 const tabs = [
   { label: 'Resumen', to: '/dashboard' },
@@ -15,6 +18,7 @@ interface TopPillProps {
 
 // Barra superior en píldora: marca, pestañas con brillo en la activa y la sesión.
 export function TopPill({ email, onLogout }: TopPillProps) {
+  const [friendsOpen, setFriendsOpen] = useState(false)
   return (
     <header className="glass-pill flex flex-wrap items-center justify-between gap-3 py-2 pl-6 pr-2">
       <div className="flex flex-wrap items-center gap-6">
@@ -27,8 +31,11 @@ export function TopPill({ email, onLogout }: TopPillProps) {
       </div>
       <div className="flex items-center gap-3 text-sm">
         <span className="hidden text-slate-400 sm:inline">{email ?? 'Espacio personal'}</span>
+        <button aria-label="Amigos" className="icon-button" onClick={() => setFriendsOpen(true)} title="Amigos" type="button"><Users size={18} /></button>
+        <ThemeToggle />
         <button aria-label="Cerrar sesión" className="icon-button" onClick={onLogout} title="Cerrar sesión" type="button"><LogOut size={18} /></button>
       </div>
+      {friendsOpen && <FriendsModal onClose={() => setFriendsOpen(false)} />}
     </header>
   )
 }

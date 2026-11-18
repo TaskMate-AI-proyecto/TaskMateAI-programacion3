@@ -1,12 +1,12 @@
 # TaskMate AI Backend - Python FastAPI Implementation
 
-A Python FastAPI backend for TaskMate AI, providing AI-powered task management with Google Gemini integration.
+A Python FastAPI backend for TaskMate AI, providing AI-powered task management with Google Groq integration.
 
 ## Features
 
 - **FastAPI** for high-performance async API
 - **SQLAlchemy** ORM with PostgreSQL
-- **Google Gemini** integration for AI-powered chat and task generation
+- **Google Groq** integration for AI-powered chat and task generation
 - **JWT** authentication
 - **Pydantic** validation and serialization
 - **AI Chat with Command Parsing** - Chat endpoint that automatically creates and manages tasks
@@ -19,7 +19,7 @@ A Python FastAPI backend for TaskMate AI, providing AI-powered task management w
 
 - Python 3.10+
 - PostgreSQL 12+
-- Google Gemini API key
+- Google Groq API key
 
 ### Installation
 
@@ -131,13 +131,13 @@ src/
 ├── config/          # Configuration (Pydantic settings)
 ├── models/          # SQLAlchemy ORM models
 ├── schemas/         # Pydantic request/response schemas
-├── services/        # Business logic (Gemini, DB)
+├── services/        # Business logic (Groq, DB)
 ├── routes/          # API route handlers
 └── utils/           # Utilities (JWT, errors)
 
 tests/               # Pytest tests
 ├── conftest.py      # Shared fixtures
-├── test_gemini_service.py
+├── test_groq_service.py
 └── test_ai_chat_endpoint.py
 ```
 
@@ -181,7 +181,7 @@ All errors follow a consistent format:
 }
 ```
 
-Status codes map Gemini errors intelligently:
+Status codes map Groq errors intelligently:
 - 401/403 API key errors → 400 (invalid key)
 - 429 rate limit → 429 (quota exceeded)
 - 503 service unavailable → 503
@@ -194,7 +194,7 @@ See `.env.example` for all configuration options.
 Required:
 - `DATABASE_URL` - PostgreSQL connection string
 - `JWT_SECRET` - Secret key for JWT signing
-- `GEMINI_API_KEY` - Google Gemini API key
+- `GROQ_API_KEY` - Google Groq API key
 
 ## Docker
 
@@ -216,7 +216,7 @@ docker-compose up backend-python
 This backend implements Issue 17 requirements:
 
 ✅ POST /api/ai/chat endpoint
-✅ Google Gemini API integration
+✅ Google Groq API integration
 ✅ Command parsing and task creation
 ✅ Strong typing (no Any)
 ✅ Early returns and helper functions

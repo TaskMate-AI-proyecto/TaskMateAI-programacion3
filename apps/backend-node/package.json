@@ -14,7 +14,8 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "openapi:export": "tsx scripts/export-openapi.ts",
     "prisma:db-verify": "prisma db verify --schema-only --db \"$DATABASE_URL\"",
-    "test": "vitest run"
+    "test": "vitest run",
+    "cleanup:example-users": "tsx scripts/cleanup-example-users.ts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
@@ -28,7 +29,6 @@
     "@fastify/jwt": "^10.2.2",
     "@fastify/swagger": "^9.9.1",
     "@fastify/swagger-ui": "^6.1.1",
-    "@google/genai": "^2.26.0",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "dotenv": "^17.4.2",

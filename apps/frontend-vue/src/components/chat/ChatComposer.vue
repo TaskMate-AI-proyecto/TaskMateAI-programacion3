@@ -24,7 +24,7 @@ function handleSubmit() {
 
 <template>
   <form
-    class="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/60 p-1.5 pl-4 backdrop-blur-xl"
+    class="flex items-center gap-2 rounded-full border border-glass/10 bg-slate-950/60 p-1.5 pl-4 backdrop-blur-xl"
     @submit.prevent="handleSubmit"
   >
     <input

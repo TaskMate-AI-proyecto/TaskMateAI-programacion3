@@ -11,9 +11,9 @@ Detalle completo en [`docs/EVALUACION.md`](docs/EVALUACION.md).
 
 ## Resumen Ejecutivo
 
-TaskMate AI es un sistema de gestión de tareas orientado a productividad personal y equipos pequeños, diseñado para combinar una experiencia de usuario tradicional con una capa de lenguaje natural basada en Gemini API. La plataforma permite crear, consultar, actualizar y eliminar tareas mediante comandos en lenguaje natural, transformando texto libre en acciones CRUD sobre un modelo de datos centralizado.
+TaskMate AI es un sistema de gestión de tareas orientado a productividad personal y equipos pequeños, diseñado para combinar una experiencia de usuario tradicional con una capa de lenguaje natural basada en Groq API. La plataforma permite crear, consultar, actualizar y eliminar tareas mediante comandos en lenguaje natural, transformando texto libre en acciones CRUD sobre un modelo de datos centralizado.
 
-La solución está concebida como un ecosistema modular con dos backends equivalentes (Node.js + Fastify y Python + FastAPI), dos frontends (React y Vue 3) y una capa de autenticación segura basada en email OTP sin contraseña. La integración con Gemini se utiliza exclusivamente para interpretar intenciones de usuario sobre tareas, reforzando la UX sin reemplazar el flujo manual ni la persistencia estructurada.
+La solución está concebida como un ecosistema modular con dos backends equivalentes (Node.js + Fastify y Python + FastAPI), dos frontends (React y Vue 3) y una capa de autenticación segura basada en email OTP sin contraseña. La integración con Groq se utiliza exclusivamente para interpretar intenciones de usuario sobre tareas, reforzando la UX sin reemplazar el flujo manual ni la persistencia estructurada.
 
 ---
 
@@ -30,7 +30,7 @@ La solución está concebida como un ecosistema modular con dos backends equival
            |                         |
            +----------- PostgreSQL -----------+
                    |
-              Gemini API (NLU)
+              Groq API (NLU)
 ```
 
 ### Principios de diseño
@@ -53,7 +53,7 @@ La solución está concebida como un ecosistema modular con dos backends equival
 | Backends | Dos implementaciones: Node.js con Fastify y Python con FastAPI |
 | Frontends | Dos clientes: React y Vue 3 |
 | Autenticación | Email OTP passwordless (flujo de dos pasos) |
-| NLU | Interpretación de comandos sobre tareas usando Gemini API |
+| NLU | Interpretación de comandos sobre tareas usando Groq API |
 | Operaciones soportadas | CRUD de tareas y categorías, consultas conversacionales, inserción y edición asistida |
 
 ### Fuera del alcance
@@ -85,7 +85,7 @@ La solución está concebida como un ecosistema modular con dos backends equival
 | Área | Meta / requisito |
 | --- | --- |
 | Dockerización | Entorno integrado totalmente dockerizado en menos de 2 minutos |
-| Latencia REST | API REST < 150 ms en promedio, excluyendo llamadas a Gemini |
+| Latencia REST | API REST < 150 ms en promedio, excluyendo llamadas a Groq |
 | Paridad de APIs | 100% de paridad en contratos entre backend Node y Python |
 | Observabilidad | Logs estructurados, trazabilidad de errores y estados HTTP consistentes |
 | Seguridad | Cifrado en tránsito, validación de sesiones y límites mínimos de autenticación |

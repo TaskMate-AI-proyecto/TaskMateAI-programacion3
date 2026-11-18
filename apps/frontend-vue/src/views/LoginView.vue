@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import OtpAuthForm from '../components/OtpAuthForm.vue'
+import AuthView from './AuthView.vue'
 </script>
 
 <template>
-  <OtpAuthForm mode="login" />
+  <AuthView :initial-signup="false" />
 </template>

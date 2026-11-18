@@ -28,7 +28,7 @@ const emit = defineEmits<{
       <Search aria-hidden class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" :size="16" />
       <input
         aria-label="Buscar conversaciones"
-        class="w-full rounded-full border border-white/10 bg-slate-950/60 py-2 pl-9 pr-3 text-sm text-slate-100 outline-none focus:border-indigo-400"
+        class="w-full rounded-full border border-glass/10 bg-slate-950/60 py-2 pl-9 pr-3 text-sm text-slate-100 outline-none focus:border-indigo-400"
         placeholder="Buscar en el historial"
         type="search"
         :value="search"
@@ -42,7 +42,7 @@ const emit = defineEmits<{
           :aria-current="thread.id === activeId ? 'true' : undefined"
           :class="[
             'w-full rounded-2xl border px-3 py-2.5 text-left transition',
-            thread.id === activeId ? 'border-indigo-400/40 bg-white/10' : 'border-transparent hover:bg-white/5',
+            thread.id === activeId ? 'border-indigo-400/40 bg-glass/10' : 'border-transparent hover:bg-glass/5',
           ]"
           type="button"
           @click="emit('select', thread.id)"

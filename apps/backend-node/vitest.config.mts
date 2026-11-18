@@ -5,12 +5,12 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
     environment: 'node',
     setupFiles: ['tests/setup.ts'],
-    // Valores ficticios: Prisma, el email y Gemini se mockean en cada suite.
+    // Valores ficticios: Prisma, el email y Groq se mockean en cada suite.
     // SMTP vacío: aunque haya un .env con credenciales reales, los tests nunca envían correo.
     env: {
       DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
       JWT_SECRET: 'test-secret',
-      GEMINI_API_KEY: 'test-gemini-key',
+      GROQ_API_KEY: 'test-groq-key',
       SMTP_HOST: '',
       SMTP_USER: '',
       SMTP_PASS: '',

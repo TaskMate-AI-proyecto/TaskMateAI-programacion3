@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getDailySummary } from '../api/aiApi'
 import { getCategories } from '../api/categoriesApi'
-import { getTasks, toggleTaskStatus } from '../api/tasksApi'
+import { getTasks, toggleTaskStatus, updateTask } from '../api/tasksApi'
 import { ToastProvider } from '../context/ToastProvider'
 import type { Category, Task } from '../types/api'
 import { Dashboard } from './Dashboard'
@@ -12,12 +12,14 @@ import { Dashboard } from './Dashboard'
 vi.mock('../api/tasksApi', () => ({
   getTasks: vi.fn(),
   toggleTaskStatus: vi.fn(),
+  updateTask: vi.fn(),
 }))
 vi.mock('../api/aiApi', () => ({ getDailySummary: vi.fn() }))
 vi.mock('../api/categoriesApi', () => ({ getCategories: vi.fn() }))
 
 const getTasksMock = vi.mocked(getTasks)
 const toggleTaskStatusMock = vi.mocked(toggleTaskStatus)
+const updateTaskMock = vi.mocked(updateTask)
 
 function makeTask(overrides: Partial<Task> & Pick<Task, 'id' | 'title' | 'priority'>): Task {
   return { description: null, status: 'PENDING', dueDate: null, categoryId: null, category: null, ...overrides }
@@ -174,5 +176,51 @@ describe('Dashboard tasks', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('No se pudieron cargar las categorías.')
     expect(screen.getByRole('list', { name: 'Lista de tareas' })).toBeInTheDocument()
+  })
+})
+
+describe('Dashboard kanban view', () => {
+  beforeEach(() => {
+    window.localStorage.clear()
+    vi.mocked(getCategories).mockResolvedValue([])
+    getTasksMock.mockResolvedValue(tasks)
+    vi.mocked(getDailySummary).mockResolvedValue('Resumen de prueba')
+  })
+
+  it('cambia a Kanban y recuerda la vista elegida', async () => {
+    const { user } = renderDashboard()
+    await getTaskList()
+
+    await user.click(screen.getByRole('button', { name: 'Kanban' }))
+
+    expect(screen.getByRole('region', { name: 'Tablero Kanban' })).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Lista de tareas' })).not.toBeInTheDocument()
+    expect(window.localStorage.getItem('taskmate_view_mode')).toBe('kanban')
+  })
+
+  it('al mover una tarea guarda el nuevo estado en la API y la muestra en su columna', async () => {
+    updateTaskMock.mockResolvedValue({ ...tasks[0], status: 'COMPLETED' })
+    const { user } = renderDashboard()
+    await getTaskList()
+    await user.click(screen.getByRole('button', { name: 'Kanban' }))
+
+    await user.selectOptions(screen.getByLabelText('Mover Preparar parcial a columna'), 'COMPLETED')
+
+    expect(updateTaskMock).toHaveBeenCalledWith('t1', { status: 'COMPLETED' })
+    expect(await within(screen.getByRole('region', { name: 'Completadas' })).findByText('Preparar parcial')).toBeInTheDocument()
+    expect(within(screen.getByRole('region', { name: 'Por Hacer' })).queryByText('Preparar parcial')).not.toBeInTheDocument()
+  })
+
+  it('si la API rechaza el cambio, la tarea vuelve a su columna original', async () => {
+    updateTaskMock.mockRejectedValue(new Error('sin conexión'))
+    const { user } = renderDashboard()
+    await getTaskList()
+    await user.click(screen.getByRole('button', { name: 'Kanban' }))
+
+    await user.selectOptions(screen.getByLabelText('Mover Preparar parcial a columna'), 'COMPLETED')
+
+    await waitFor(() => expect(updateTaskMock).toHaveBeenCalledTimes(1))
+    expect(await within(screen.getByRole('region', { name: 'Por Hacer' })).findByText('Preparar parcial')).toBeInTheDocument()
+    expect(within(screen.getByRole('region', { name: 'Completadas' })).queryByText('Preparar parcial')).not.toBeInTheDocument()
   })
 })

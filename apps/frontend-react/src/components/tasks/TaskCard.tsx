@@ -1,6 +1,7 @@
 import { CalendarDays, Check, Pencil, Trash2 } from 'lucide-react'
 import type { Category, Task } from '../../types/api'
 import { Badge } from '../ui/Badge'
+import { CollaborativeBadge } from './CollaborativeBadge'
 import { formatDueDate, isOverdue, priorityLabels, priorityStyles, statusLabels, statusStyles } from './taskUtils'
 
 interface TaskCardProps {
@@ -76,6 +77,7 @@ export function TaskCard({ task, isBusy, onToggle, onEdit, onDelete }: TaskCardP
           <h3 className={`font-semibold ${done ? 'text-slate-500 line-through' : 'text-slate-100'}`}>{task.title}</h3>
           <Badge tone={statusStyles[task.status]}>{statusLabels[task.status]}</Badge>
           <Badge tone={priorityStyles[task.priority]}>{`Prioridad ${priorityLabels[task.priority].toLowerCase()}`}</Badge>
+          <CollaborativeBadge users={task.assignedUsers} />
         </div>
         {task.description && <p className="whitespace-pre-line text-sm leading-6 text-slate-400">{task.description}</p>}
         <TaskMeta task={task} />

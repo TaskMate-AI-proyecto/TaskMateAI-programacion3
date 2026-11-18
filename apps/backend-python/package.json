@@ -1,0 +1,11 @@
+{
+  "name": "backend-python",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Scripts npm que ejecutan las herramientas Python del backend (usa el venv si existe).",
+  "scripts": {
+    "build": "node scripts/run.mjs -m compileall -q src tests app.py main.py",
+    "lint": "node scripts/run.mjs -m ruff check src tests app.py main.py",
+    "test": "node scripts/run.mjs -m pytest"
+  }
+}

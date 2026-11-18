@@ -6,14 +6,19 @@ import { TaskFilters } from '../components/tasks/TaskFilters'
 import { TaskList } from '../components/tasks/TaskList'
 import { emptyFilters, filterTasks, hasActiveFilters, type TaskFilterState } from '../components/tasks/taskUtils'
 import { ErrorPanel } from '../components/ui/ErrorPanel'
+import { useRewardNotifier } from '../hooks/useRewardNotifier'
+import { useActiveWorkspaceId } from '../hooks/useWorkspace'
 import { useSafeAction } from '../hooks/useSafeAction'
+import { useTaskDeepLink } from '../hooks/useTaskDeepLink'
 import { useTasksData } from '../hooks/useTasksData'
 import { useRefreshOnTaskChanges } from '../hooks/useTaskSync'
+import { usePolling } from '../hooks/usePolling'
 import { useToast } from '../hooks/useToast'
 import type { Task, TaskInput } from '../types/api'
 
-function saveTask(editing: Task | null, input: TaskInput) {
-  return editing ? updateTask(editing.id, input) : createTask(input)
+// Las tareas nuevas se crean en el espacio activo, si hay uno.
+function saveTask(editing: Task | null, input: TaskInput, workspaceId: string) {
+  return editing ? updateTask(editing.id, input) : createTask({ ...input, workspaceId: workspaceId || undefined })
 }
 
 function replaceTask(list: Task[], updated: Task) {
@@ -27,14 +32,20 @@ function editingTask(dialog: TaskDialog) {
 export function Tasks() {
   const { notify } = useToast()
   const runSafely = useSafeAction()
+  const announceReward = useRewardNotifier()
+  const workspaceId = useActiveWorkspaceId()
   const [filters, setFilters] = useState<TaskFilterState>(emptyFilters)
   const [dialog, setDialog] = useState<TaskDialog>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [pendingId, setPendingId] = useState<string | null>(null)
 
-  const { tasks, categories, error, isLoading, updateTasks, refresh, reload } = useTasksData(filters.categoryId)
+  const { tasks, categories, error, isLoading, updateTasks, refresh, reload } = useTasksData(filters.categoryId, workspaceId)
   // Si el asistente cambia tareas mientras esta vista está abierta, el listado se vuelve a pedir.
   useRefreshOnTaskChanges(refresh)
+  // Las tareas compartidas por un amigo llegan sin recargar: se vuelven a pedir cada 5 s con la ventana visible.
+  usePolling(refresh, 5000)
+  // Desde la paleta de comandos: ?tarea=<id> abre esa tarea y ?nueva=1 abre el formulario de nueva tarea.
+  useTaskDeepLink(tasks, isLoading, (task) => setDialog({ kind: 'form', task }))
 
   async function runForTask<T>(task: Task, action: () => Promise<T>) {
     setPendingId(task.id)
@@ -48,10 +59,11 @@ export function Tasks() {
   async function handleSave(input: TaskInput) {
     const editing = editingTask(dialog)
     setIsSaving(true)
-    const result = await runSafely(() => saveTask(editing, input))
+    const result = await runSafely(() => saveTask(editing, input, workspaceId))
     setIsSaving(false)
     if (!result.ok) return
 
+    announceReward(result.value)
     notify(editing ? 'Tarea actualizada' : 'Tarea creada')
     setDialog(null)
     if (filters.categoryId) refresh()
@@ -60,7 +72,10 @@ export function Tasks() {
 
   async function handleToggle(task: Task) {
     const result = await runForTask(task, () => toggleTaskStatus(task))
-    if (result.ok) updateTasks((list) => replaceTask(list, result.value))
+    if (!result.ok) return
+
+    announceReward(result.value)
+    updateTasks((list) => replaceTask(list, result.value))
   }
 
   async function handleDelete(task: Task) {

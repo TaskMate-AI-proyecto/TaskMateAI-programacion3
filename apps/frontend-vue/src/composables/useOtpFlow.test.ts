@@ -13,12 +13,13 @@ describe('useOtpFlow', () => {
     vi.mocked(verifyOtp).mockReset()
   })
 
-  it('empieza en el paso de correo, sin mensajes ni error', () => {
+  it('empieza en el paso de correo, sin mensajes, error ni verificación en curso', () => {
     const flow = useOtpFlow({ onSession: vi.fn() })
 
     expect(flow.step.value).toBe('email')
     expect(flow.message.value).toBeNull()
     expect(flow.error.value).toBeNull()
+    expect(flow.otpStatus.value).toBe('idle')
   })
 
   it('pide el código y pasa al paso de verificación', async () => {
@@ -44,56 +45,71 @@ describe('useOtpFlow', () => {
     expect(flow.step.value).toBe('email')
   })
 
-  it('sólo permite verificar con seis dígitos y sanitiza lo que se escribe', () => {
+  it('pasa por "verifying" mientras espera al servidor', async () => {
+    let resolveVerify: (value: typeof session) => void = () => {}
+    vi.mocked(verifyOtp).mockReturnValue(new Promise((resolve) => { resolveVerify = resolve }))
     const flow = useOtpFlow({ onSession: vi.fn() })
+    flow.email.value = 'ana@example.com'
 
-    flow.setCode('12a3-4b5 6789')
+    const pending = flow.verifyCode('123456')
+    expect(flow.otpStatus.value).toBe('verifying')
 
-    expect(flow.code.value).toBe('123456')
-    expect(flow.canVerify.value).toBe(true)
-
-    flow.setCode('123')
-    expect(flow.canVerify.value).toBe(false)
+    resolveVerify(session)
+    await pending
+    expect(flow.otpStatus.value).toBe('success')
   })
 
-  it('verifica el código y entrega la sesión al terminar', async () => {
+  it('entrega la sesión sólo al terminar la animación de éxito', async () => {
     vi.mocked(verifyOtp).mockResolvedValue(session)
     const onSession = vi.fn()
     const flow = useOtpFlow({ onSession })
     flow.email.value = 'ana@example.com'
-    flow.setCode('123456')
 
-    await flow.verifyCode()
+    await flow.verifyCode('123456')
 
     expect(verifyOtp).toHaveBeenCalledWith('ana@example.com', '123456')
+    expect(onSession).not.toHaveBeenCalled()
+
+    flow.completeLogin()
     expect(onSession).toHaveBeenCalledWith(session)
-    expect(flow.error.value).toBeNull()
   })
 
-  it('no inicia sesión cuando el código es rechazado', async () => {
+  it('marca error cuando el código es rechazado y no inicia sesión', async () => {
     vi.mocked(verifyOtp).mockRejectedValue(new Error('invalid'))
     const onSession = vi.fn()
     const flow = useOtpFlow({ onSession })
-    flow.setCode('000000')
 
-    await flow.verifyCode()
+    await flow.verifyCode('000000')
+    flow.completeLogin()
     await flushPromises()
 
-    expect(onSession).not.toHaveBeenCalled()
+    expect(flow.otpStatus.value).toBe('error')
     expect(flow.error.value).toBe('No se pudo completar la solicitud.')
+    expect(onSession).not.toHaveBeenCalled()
   })
 
-  it('vuelve al correo limpiando el código y el error', async () => {
+  it('vuelve a estado normal al volver a escribir tras un error', async () => {
+    vi.mocked(verifyOtp).mockRejectedValue(new Error('invalid'))
+    const flow = useOtpFlow({ onSession: vi.fn() })
+    await flow.verifyCode('000000')
+
+    flow.resetOtpStatus()
+
+    expect(flow.otpStatus.value).toBe('idle')
+    expect(flow.error.value).toBeNull()
+  })
+
+  it('vuelve al correo limpiando el estado y el error', async () => {
     vi.mocked(sendOtp).mockResolvedValue(undefined)
     const flow = useOtpFlow({ onSession: vi.fn() })
     await flow.requestCode()
-    flow.setCode('123')
     flow.error.value = 'algo'
+    flow.otpStatus.value = 'error'
 
     flow.backToEmail()
 
     expect(flow.step.value).toBe('email')
-    expect(flow.code.value).toBe('')
+    expect(flow.otpStatus.value).toBe('idle')
     expect(flow.error.value).toBeNull()
   })
 })

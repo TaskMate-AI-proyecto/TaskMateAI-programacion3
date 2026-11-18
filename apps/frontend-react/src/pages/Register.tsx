@@ -1,5 +1,5 @@
-import { OtpAuthForm } from '../components/OtpAuthForm'
+import { AuthView } from './AuthView'
 
 export function Register() {
-  return <OtpAuthForm mode="register" />
+  return <AuthView initialSignup />
 }

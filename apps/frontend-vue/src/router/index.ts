@@ -3,6 +3,10 @@ import { useAuthStore } from '../stores/auth'
 import { resolveAuthRedirect, type AuthRouteMeta } from './guards'
 import AppShell from '../components/layout/AppShell.vue'
 import ChatView from '../views/ChatView.vue'
+import TasksView from '../views/TasksView.vue'
+import MessagesView from '../views/MessagesView.vue'
+import AchievementsView from '../views/AchievementsView.vue'
+import SettingsView from '../views/SettingsView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
@@ -22,6 +26,10 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: '', redirect: '/dashboard' },
       { path: 'dashboard', component: DashboardView },
+      { path: 'tasks', component: TasksView },
+      { path: 'messages', component: MessagesView },
+      { path: 'achievements', component: AchievementsView },
+      { path: 'settings', component: SettingsView },
       { path: 'chat', component: ChatView },
     ],
   },

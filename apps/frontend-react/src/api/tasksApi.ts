@@ -1,5 +1,5 @@
 import axiosClient from './axiosClient'
-import type { Task, TaskInput, TaskQuery } from '../types/api'
+import type { Task, TaskInput, TaskQuery, TaskWithReward } from '../types/api'
 
 export async function getTasks(query: TaskQuery = {}) {
   const { data } = await axiosClient.get<Task[]>('/api/tasks', { params: query })
@@ -16,8 +16,9 @@ export async function createTask(input: TaskInput) {
   return data
 }
 
+// Al completar una tarea la respuesta incluye el reward (XP, racha y logros nuevos).
 export async function updateTask(id: string, input: Partial<TaskInput>) {
-  const { data } = await axiosClient.put<Task>(`/api/tasks/${id}`, input)
+  const { data } = await axiosClient.put<TaskWithReward>(`/api/tasks/${id}`, input)
   return data
 }
 

@@ -27,7 +27,7 @@ echo "==> backend-python (pytest + pytest-cov)"
 (
   cd "$ROOT/apps/backend-python"
   JWT_SECRET="${JWT_SECRET:-test-secret}" \
-  GEMINI_API_KEY="${GEMINI_API_KEY:-test-key}" \
+  GROQ_API_KEY="${GROQ_API_KEY:-test-key}" \
   DATABASE_URL="${DATABASE_URL:-sqlite:///./test.db}" \
     "$PY" -m pytest -p no:cacheprovider -q
 )

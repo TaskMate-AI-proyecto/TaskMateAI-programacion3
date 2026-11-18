@@ -13,6 +13,8 @@ COPY . .
 # URL del API que usará el navegador. Se fija al construir la imagen: cambiarla exige reconstruirla.
 ARG VITE_API_BASE_URL=http://localhost:3001
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ARG VITE_PYTHON_API_BASE_URL=http://localhost:8000
+ENV VITE_PYTHON_API_BASE_URL=$VITE_PYTHON_API_BASE_URL
 
 RUN npm run build
 

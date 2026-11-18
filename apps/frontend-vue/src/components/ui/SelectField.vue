@@ -14,7 +14,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <label class="block text-sm font-medium text-slate-300">
+  <label class="block text-sm font-medium">
     <span v-if="hideLabel" class="sr-only">{{ label }}</span>
     <span v-else>{{ label }}</span>
     <select

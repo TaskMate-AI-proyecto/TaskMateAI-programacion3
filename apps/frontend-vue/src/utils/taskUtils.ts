@@ -3,18 +3,21 @@ import type { Category, Task, TaskInput, TaskPriority, TaskStatus } from '../typ
 export const statusLabels: Record<TaskStatus, string> = {
   PENDING: 'Pendiente',
   IN_PROGRESS: 'En progreso',
+  IN_REVIEW: 'En revisión',
   COMPLETED: 'Completada',
 }
 
 export const statusStyles: Record<TaskStatus, string> = {
   PENDING: 'bg-slate-800 text-slate-300',
-  IN_PROGRESS: 'bg-sky-500/15 text-sky-300',
-  COMPLETED: 'bg-emerald-500/15 text-emerald-300',
+  IN_PROGRESS: 'bg-sky-500/15 text-sky-700 dark:text-sky-300',
+  IN_REVIEW: 'bg-violet-500/15 text-violet-700 dark:text-violet-300',
+  COMPLETED: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
 }
 
 export const statusFilterLabels: Record<TaskStatus, string> = {
   PENDING: 'Pendientes',
   IN_PROGRESS: 'En progreso',
+  IN_REVIEW: 'En revisión',
   COMPLETED: 'Completadas',
 }
 
@@ -25,8 +28,8 @@ export const priorityLabels: Record<TaskPriority, string> = {
 }
 
 export const priorityStyles: Record<TaskPriority, string> = {
-  LOW: 'bg-emerald-500/15 text-emerald-300',
-  MEDIUM: 'bg-amber-500/15 text-amber-300',
+  LOW: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
+  MEDIUM: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
   HIGH: 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-[0_0_14px_-4px_rgba(139,92,246,0.7)]',
 }
 
@@ -124,4 +127,9 @@ export function formatDueDate(iso: string) {
 export function isOverdue(task: Pick<Task, 'dueDate' | 'status'>) {
   if (!task.dueDate || task.status === 'COMPLETED') return false
   return task.dueDate.slice(0, 10) < new Date().toISOString().slice(0, 10)
+}
+
+// Añade las subtareas generadas por la IA al final de la descripción, como casillas de Markdown.
+export function appendSubtasks(description: string, subtasks: string[]) {
+  return [description.trim(), ...subtasks.map((subtask) => `- [ ] ${subtask}`)].filter(Boolean).join('\n')
 }

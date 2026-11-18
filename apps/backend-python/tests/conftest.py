@@ -1,6 +1,5 @@
 """Pytest configuration and fixtures."""
 
-import asyncio
 from datetime import datetime, timedelta
 from typing import Generator
 from unittest.mock import AsyncMock, patch
@@ -10,7 +9,6 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
-from src.config.env import settings
 from src.models import Base, User, Task, Category, Status, Priority
 from src.services.database import get_db
 from src.utils.security import create_access_token
@@ -45,8 +43,8 @@ def db() -> Generator[Session, None, None]:
 @pytest.fixture(scope="function")
 def client(db: Session, monkeypatch) -> TestClient:
     """Create FastAPI test client with overridden database."""
-    # Set a dummy Gemini API key for tests
-    monkeypatch.setenv("GEMINI_API_KEY", "test-api-key-12345")
+    # Set a dummy Groq API key for tests
+    monkeypatch.setenv("GROQ_API_KEY", "test-api-key-12345")
 
     app = create_app()
     app.dependency_overrides[get_db] = override_get_db
@@ -111,7 +109,7 @@ def auth_headers(jwt_token: str) -> dict:
 
 
 @pytest.fixture
-def mock_gemini():
-    """Create a mocked Gemini service."""
-    with patch("src.services.gemini.genai") as mock:
+def mock_groq():
+    """Create a mocked Groq service."""
+    with patch("src.services.groq._request_completion", new=AsyncMock()) as mock:
         yield mock

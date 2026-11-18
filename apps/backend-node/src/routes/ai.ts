@@ -5,7 +5,7 @@ import { failure, getUserId } from '../lib/http';
 import { readProperty } from '../lib/objects';
 import prisma from '../lib/prisma';
 import { applyChatCommands, extractChatCommands } from '../services/chatCommands';
-import { generateChatReply, generateDailySummary, generateSubtasks } from '../services/gemini';
+import { generateChatReply, generateDailySummary, generateSubtasks } from '../services/groq';
 
 const generateSubtasksSchema = z.object({
   title: z.string().trim().min(1),
@@ -23,6 +23,12 @@ const chatSchema = z.object({
     )
     .max(20)
     .optional(),
+  assistant: z
+    .object({
+      personality: z.enum(['professional', 'concise', 'technical', 'motivational']),
+      instructions: z.string().trim().max(500).optional(),
+    })
+    .optional(),
 });
 
 // Tareas pendientes del usuario: contexto para el resumen y para el chat (el chat necesita el id).
@@ -35,50 +41,48 @@ function findPendingTasks(userId: string) {
   });
 }
 
-type GeminiFailure = { statusCode: number; message: string };
+type GroqFailure = { statusCode: number; message: string };
 
-const invalidKeyFailure: GeminiFailure = {
+const invalidKeyFailure: GroqFailure = {
   statusCode: 400,
-  message: 'La clave de la API de Gemini no es válida.',
+  message: 'La clave de la API de Groq no es válida.',
 };
-const defaultFailure: GeminiFailure = {
+const defaultFailure: GroqFailure = {
   statusCode: 500,
-  message: 'No se pudo completar la solicitud con Gemini.',
+  message: 'No se pudo completar la solicitud con Groq.',
 };
 
-const failuresByGeminiStatus: Record<number, GeminiFailure> = {
+const failuresByGroqStatus: Record<number, GroqFailure> = {
   401: invalidKeyFailure,
   403: invalidKeyFailure,
   429: {
     statusCode: 429,
-    message: 'Se agotó la cuota de Gemini. Intente nuevamente en unos minutos.',
+    message: 'Se agotó la cuota de Groq. Intente nuevamente en unos minutos.',
   },
   503: {
     statusCode: 503,
-    message: 'Gemini no está disponible temporalmente. Intente nuevamente más tarde.',
+    message: 'Groq no está disponible temporalmente. Intente nuevamente más tarde.',
   },
 };
 
-function getGeminiErrorResponse(error: unknown) {
+function getGroqErrorResponse(error: unknown) {
   const message = error instanceof Error ? error.message : '';
 
   if (message.includes('API_KEY_INVALID')) return invalidKeyFailure;
 
   const status = readProperty(error, 'status');
 
-  return (
-    (typeof status === 'number' ? failuresByGeminiStatus[status] : undefined) ?? defaultFailure
-  );
+  return (typeof status === 'number' ? failuresByGroqStatus[status] : undefined) ?? defaultFailure;
 }
 
-function replyGeminiFailure(
+function replyGroqFailure(
   app: FastifyInstance,
   reply: FastifyReply,
   err: unknown,
   logMessage: string,
 ) {
   app.log.error({ err }, logMessage);
-  const { statusCode, message } = getGeminiErrorResponse(err);
+  const { statusCode, message } = getGroqErrorResponse(err);
 
   return failure(reply, statusCode, message);
 }
@@ -96,7 +100,7 @@ export default async function aiRoutes(app: FastifyInstance) {
         const subtasks = await generateSubtasks(bodyResult.data.title, bodyResult.data.description);
         return { success: true, subtasks };
       } catch (err) {
-        return replyGeminiFailure(app, reply, err, 'Error generating subtasks with Gemini');
+        return replyGroqFailure(app, reply, err, 'Error generating subtasks with Groq');
       }
     },
   );
@@ -108,7 +112,7 @@ export default async function aiRoutes(app: FastifyInstance) {
       const summary = await generateDailySummary(tasks);
       return { success: true, summary };
     } catch (err) {
-      return replyGeminiFailure(app, reply, err, 'Error generating daily summary with Gemini');
+      return replyGroqFailure(app, reply, err, 'Error generating daily summary with Groq');
     }
   });
 
@@ -122,13 +126,13 @@ export default async function aiRoutes(app: FastifyInstance) {
 
     let answer: string;
     try {
-      answer = await generateChatReply(
-        bodyResult.data.message,
-        bodyResult.data.history ?? [],
-        tasks,
-      );
+      const { message, history = [], assistant } = bodyResult.data;
+      // El estilo sólo se envía cuando el usuario lo ha configurado; sin él, el prompt queda igual que antes.
+      answer = assistant
+        ? await generateChatReply(message, history, tasks, assistant)
+        : await generateChatReply(message, history, tasks);
     } catch (err) {
-      return replyGeminiFailure(app, reply, err, 'Error generating chat reply with Gemini');
+      return replyGroqFailure(app, reply, err, 'Error generating chat reply with Groq');
     }
 
     // Los comandos de la respuesta se ejecutan aquí, con los permisos del usuario, y se devuelven los cambios
