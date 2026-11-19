@@ -3,22 +3,23 @@
 
 > Documento **generado automáticamente** por la cátedra de Programación III (RepoSense + análisis de calidad + constancia). **No editar a mano**: se regenera en cada evaluación.
 > Rama evaluada: `main`. Análisis **heurístico** (regex + métricas): es una criba para orientar la revisión, **no una nota**.
-> Generado: 2026-11-18.
+> Generado: 2026-11-19.
 
 ## 1. Veredicto
 
 | Aspecto | Resultado |
 |---|---|
 | Tipo de proyecto | app |
-| Índice de calidad de servicios | **100/100** (mínimo 50) |
-| Criterios cumplidos | **16/16** |
+| Índice de calidad de servicios | **50/100** (mínimo 50) |
+| Criterios cumplidos | **14/16** |
 | Aprobado (semáforo) | **SI** |
-| Código (LOC) | 6,071 |
-| Archivos de código | 168 |
-| Tests (archivos) | 58 |
-| Cobertura de líneas | 97.6% (mínimo 80%) |
+| Código (LOC) | 15,172 |
+| Archivos de código | 333 |
+| Tests (archivos) | 128 |
+| Cobertura de líneas | 96.7% (mínimo 80%) |
 | Capas detectadas | presentacion, logica, datos, vistas, servicios, estado |
 | Pushes directos a `main` (sin PR) | 2 |
+| Tope por duplicación | `DUP>=15%` → índice ≤ 50 |
 
 > **Pushes directos:** se detectaron **2** commit(s) a `main` que no pasaron por un Pull Request. El flujo esperado es **rama → PR → revisión → merge**; el PR se aprueba con el mensaje `Aprobado`. Evitá pushear directo a `main`: la ruleset lo bloquea y el commit directo queda auditado.
 
@@ -28,7 +29,7 @@
 
 | Autor | Commits | Código (LOC) | Tests (LOC) | Docs (LOC) | Días activos | % del código |
 |---|---:|---:|---:|---:|---:|---:|
-| santi-dona | 36 | 7,516 | 5,739 | 728 | 15 | 100% |
+| santi-dona | 37 | 18,566 | 11,461 | 728 | 16 | 100% |
 
 > _El LOC de autoría lo calcula RepoSense sobre el historial y puede diferir del LOC de código del análisis de calidad (que mira solo el estado de `main`)._
 
@@ -38,7 +39,7 @@
 
 | Alumno | Sesiones | Cumplimiento | Pausa | Recencia | IC | Nivel | Para subir de nivel |
 |---|--:|--:|--:|--:|--:|--|--|
-| santi-dona | 11 | 40% | 21 d | 14% | **28** | No aprueba | Cumplimiento 40% (mín. 50%); Recencia 14% (mín. 50%) |
+| santi-dona | 12 | 43% | 21 d | 93% | **41** | No aprueba | Cumplimiento 43% (mín. 50%) |
 
 > Para aprobar el IC: **2 sesiones por semana** sostenidas, sin pausas mayores a **10 días** y con actividad en las **últimas 2 semanas**. Se excluyen merges, bots y al docente. Zona horaria UTC-3.
 
@@ -50,13 +51,17 @@ Cada aspecto indica **qué mide**, **por qué importa** y **tu resultado**. Cuan
 
 - **Qué mide:** Un resumen numérico (0-100) que combina todas las señales y métricas del análisis, con topes duros por duplicación.
 - **Por qué importa:** Ordena y prioriza la revisión: un índice bajo indica varias señales que conviene mirar juntas.
-- **Tu resultado:** índice **100/100** _(mínimo 50)_
+- **Tu resultado:** índice **50/100** _(mínimo 50)_
 
-### 2. Duplicación (DRY) (duplicacion) — OK
+### 2. Duplicación (DRY) (duplicacion) — A REVISAR
 
 - **Qué mide:** Porcentaje de bloques de código repetidos (similitud) en el repositorio.
 - **Por qué importa:** Cada copia se mantiene por separado: un arreglo hay que repetirlo y los defectos se multiplican.
-- **Tu resultado:** **10.1%** de duplicación _(máximo 15%)_
+- **Tu resultado:** **19.8%** de duplicación _(máximo 15%)_
+- **Para investigar la causa:**
+    - ¿El trabajo se repartió por pantallas o archivos y se integró copiando y pegando bloques?
+    - ¿Qué zonas del sistema cambiaron juntas más de una vez (señal de lógica compartida)?
+    - ¿Hubo un lugar común acordado para la lógica repetida antes de empezar, o cada integrante resolvió lo suyo?
 
 ### 3. Secretos hardcodeados (SEC) — OK
 
@@ -94,11 +99,15 @@ Cada aspecto indica **qué mide**, **por qué importa** y **tu resultado**. Cuan
 - **Por qué importa:** Se pierde la ayuda del compilador justo donde los datos vienen de afuera (API, formularios).
 - **Tu resultado:** **0** uso(s) de `any` _(máximo 2)_
 
-### 9. Componente demasiado grande (BigC) — OK
+### 9. Componente demasiado grande (BigC) — A REVISAR
 
 - **Qué mide:** Componentes de UI muy extensos, que suelen mezclar render, estado y lógica.
 - **Por qué importa:** Son difíciles de leer, probar y reutilizar, y sus cambios tienen efectos inesperados.
-- **Tu resultado:** **0** componente(s) demasiado grande(s) _(máximo 1)_
+- **Tu resultado:** **6** componente(s) demasiado grande(s) _(máximo 1)_
+- **Para investigar la causa:**
+    - ¿El componente creció a medida que se agregaban requisitos, sin volver a dividirlo?
+    - ¿Mezcla responsabilidades distintas (mostrar, calcular, pedir datos)?
+    - ¿Se dividió por pantalla o por unidad de responsabilidad?
 
 ### 10. Baja cohesión (Coh) — OK
 
@@ -110,13 +119,13 @@ Cada aspecto indica **qué mide**, **por qué importa** y **tu resultado**. Cuan
 
 - **Qué mide:** Complejidad ciclomática: cantidad de caminos posibles dentro de una función (condicionales, bucles, casos).
 - **Por qué importa:** Muchos caminos = difícil de seguir y de probar; suelen esconderse casos sin cubrir.
-- **Tu resultado:** **15** bloque(s) de complejidad alta _(máximo 5 por 1000 LOC (tenés 6071 LOC))_
+- **Tu resultado:** **24** bloque(s) de complejidad alta _(máximo 5 por 1000 LOC (tenés 15172 LOC))_
 
 ### 12. Funciones/métodos largos o con muchos parámetros (Tam) — OK
 
 - **Qué mide:** Tamaño de las funciones/métodos y cantidad de parámetros.
 - **Por qué importa:** Una función que hace varias cosas cuesta leerla, nombrarla y reutilizarla.
-- **Tu resultado:** **27** función/método(s) largos o con muchos parámetros _(máximo 10 por 1000 LOC)_
+- **Tu resultado:** **51** función/método(s) largos o con muchos parámetros _(máximo 10 por 1000 LOC)_
 
 ### 13. Acoplamiento alto (Acop) — OK
 
@@ -128,23 +137,28 @@ Cada aspecto indica **qué mide**, **por qué importa** y **tu resultado**. Cuan
 
 - **Qué mide:** Porcentaje de líneas de código ejecutadas por la suite de tests (cobertura real, no cantidad de archivos de test).
 - **Por qué importa:** Un test que existe pero no ejecuta el código no protege de nada: la cobertura muestra qué partes quedan sin verificar.
-- **Tu resultado:** **97.6%** de líneas cubiertas · fuente: ejecución: pytest · salteado: apps/frontend-vue, apps/frontend-react _(mínimo 80% de líneas)_
+- **Tu resultado:** **96.7%** de líneas cubiertas · fuente: ejecución: pytest · salteado: apps/frontend-vue, apps/frontend-react _(mínimo 80% de líneas)_
 
 ### 15. Endpoints del backend (EP) — OK
 
 - **Qué mide:** Cantidad de endpoints (rutas HTTP) expuestos por el backend.
 - **Por qué importa:** El backend se mide por lo que expone: pocos endpoints sugiere poca funcionalidad de servicio.
-- **Tu resultado:** **23** endpoint(s) _(mínimo 5)_
+- **Tu resultado:** **40** endpoint(s) _(mínimo 5)_
 
 ### 16. Vistas del frontend (Vistas) — OK
 
 - **Qué mide:** Cantidad de vistas/componentes de pantalla del frontend.
 - **Por qué importa:** El frontend se mide por pantallas: pocas vistas sugiere poca cobertura de la interfaz pedida.
-- **Tu resultado:** **79** vista(s)/componente(s) _(mínimo 6)_
+- **Tu resultado:** **167** vista(s)/componente(s) _(mínimo 6)_
 
 ## 5. Observaciones y qué falta
 
-_Cumple **todos** los criterios del semáforo: no hay nada que arreglar para aprobar. El siguiente objetivo es sostenerlo y mejorar duplicación y diseño._
+**Aprobado con observaciones.** Estos criterios quedan en rojo (se permiten hasta **3** sin que sean compuertas críticas), así que no bloquean la aprobación pero conviene corregirlos:
+
+| Criterio | Resultado actual | Meta | Brecha | Cómo alcanzarlo |
+|---|---|---|---|---|
+| Duplicación (DRY) (duplicacion) | **19.8%** de duplicación | máximo 15% | sobran 4.8 pts | Ubicá los bloques repetidos con `jscpd` o SonarQube, llevá la lógica común a una función o módulo compartido y hacé que todos lo usen. Cada copia eliminada baja el porcentaje; meta ≤15%. |
+| Componente demasiado grande (BigC) | **6** componente(s) demasiado grande(s) | máximo 1 | 5 componente(s) de más | Dividí el componente por responsabilidad en subcomponentes (render, estado, acceso a datos) y dejá el original sólo como orquestador. Meta: ≤1 componente grande. |
 
 ## 6. Actividad en clase y fuera de clase
 
@@ -152,7 +166,7 @@ _Cumple **todos** los criterios del semáforo: no hay nada que arreglar para apr
 
 ### santi-dona
 
-**14/28 clases con actividad** · total del período: 38 commits · 28 merges
+**15/28 clases con actividad** · total del período: 39 commits · 29 merges
 
 | Fecha | Actividad | Repositorios | Commits / merges |
 |---|:--:|---|--:|
@@ -183,7 +197,7 @@ _Cumple **todos** los criterios del semáforo: no hay nada que arreglar para apr
 | 2026-11-06 | **Sí** | TaskMateAI-programacion3 | 5 / 4 |
 | 2026-11-11 | No | sin actividad | 0 / 0 |
 | 2026-11-13 | No | sin actividad | 0 / 0 |
-| 2026-11-18 | No | sin actividad | 0 / 0 |
+| 2026-11-18 | **Sí** | TaskMateAI-programacion3 | 1 / 1 |
 
 **Fuera de clase:** 1 fecha(s) con actividad · 0 commits · 1 merges
 
@@ -193,7 +207,36 @@ _Cumple **todos** los criterios del semáforo: no hay nada que arreglar para apr
 
 ## 7. Anexo: archivos donde se originan los problemas
 
-_No hay criterios en rojo: no hay archivos que corregir._
+Se listan los archivos y líneas que el análisis marca para cada criterio en rojo. Para **duplicación** se muestran los archivos con más líneas repetidas; para **cobertura**, las unidades por debajo del umbral.
+
+**Duplicación (duplicacion)** — archivos con más líneas repetidas:
+
+- `apps/frontend-react/src/types/api.ts` — 125 línea(s) duplicada(s)
+- `apps/frontend-vue/src/types/api.ts` — 118 línea(s) duplicada(s)
+- `apps/frontend-react/src/settings/settings.ts` — 88 línea(s) duplicada(s)
+- `apps/frontend-vue/src/settings/settings.ts` — 88 línea(s) duplicada(s)
+- `apps/frontend-vue/src/utils/taskUtils.ts` — 74 línea(s) duplicada(s)
+- `apps/frontend-react/src/components/tasks/taskUtils.ts` — 74 línea(s) duplicada(s)
+- `apps/frontend-vue/src/command-palette/commandSearch.ts` — 61 línea(s) duplicada(s)
+- `apps/frontend-react/src/command-palette/commandSearch.ts` — 61 línea(s) duplicada(s)
+- `apps/frontend-react/src/command-palette/paletteEntries.ts` — 55 línea(s) duplicada(s)
+- `apps/frontend-vue/src/command-palette/paletteEntries.ts` — 55 línea(s) duplicada(s)
+- `apps/frontend-vue/src/theme/theme.ts` — 52 línea(s) duplicada(s)
+- `apps/frontend-react/src/theme/theme.ts` — 52 línea(s) duplicada(s)
+- `apps/frontend-vue/src/utils/aiText.ts` — 45 línea(s) duplicada(s)
+- `apps/frontend-react/src/utils/aiText.ts` — 45 línea(s) duplicada(s)
+- `apps/frontend-react/src/command-palette/shortcuts.ts` — 37 línea(s) duplicada(s)
+
+**Componente demasiado grande (BigC)** — 6 hallazgo(s) en 6 archivo(s):
+
+| Archivo | Línea(s) | Señal |
+|---|---|---|
+| `apps/frontend-react/src/command-palette/CommandPalette.tsx` | 1 | componente grande (213 líneas) |
+| `apps/frontend-react/src/components/friends/FriendsModal.tsx` | 1 | componente grande (167 líneas) |
+| `apps/frontend-react/src/components/otp/GlassyOTP.tsx` | 1 | componente grande (167 líneas) |
+| `apps/frontend-vue/src/components/command-palette/CommandPalette.vue` | 1 | componente grande (173 líneas) |
+| `apps/frontend-vue/src/views/DashboardView.vue` | 1 | componente grande (172 líneas) |
+| `apps/frontend-vue/src/views/TasksView.vue` | 1 | componente grande (193 líneas) |
 
 ---
 _Informe generado por la cátedra. Los umbrales corresponden al perfil `exigente`. Ante dudas, revisá el archivo y la línea señalados y el criterio en `CRITERIOS-CALIDAD.md`._
