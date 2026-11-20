@@ -3,7 +3,7 @@
 
 > Documento **generado automáticamente** por la cátedra de Programación III (RepoSense + análisis de calidad + constancia). **No editar a mano**: se regenera en cada evaluación.
 > Rama evaluada: `main`. Análisis **heurístico** (regex + métricas): es una criba para orientar la revisión, **no una nota**.
-> Generado: 2026-11-19.
+> Generado: 2026-11-20.
 
 ## 1. Veredicto
 
@@ -39,7 +39,7 @@
 
 | Alumno | Sesiones | Cumplimiento | Pausa | Recencia | IC | Nivel | Para subir de nivel |
 |---|--:|--:|--:|--:|--:|--|--|
-| santi-dona | 12 | 43% | 21 d | 93% | **41** | No aprueba | Cumplimiento 43% (mín. 50%) |
+| santi-dona | 12 | 42% | 21 d | 86% | **40** | No aprueba | Cumplimiento 42% (mín. 50%) |
 
 > Para aprobar el IC: **2 sesiones por semana** sostenidas, sin pausas mayores a **10 días** y con actividad en las **últimas 2 semanas**. Se excluyen merges, bots y al docente. Zona horaria UTC-3.
 
@@ -162,11 +162,11 @@ Cada aspecto indica **qué mide**, **por qué importa** y **tu resultado**. Cuan
 
 ## 6. Actividad en clase y fuera de clase
 
-> Se consideran las **28 clases** del período (miércoles y viernes, según `config/constancia.json`; feriados y semanas sin clase descontados). Para cada alumno se muestra la actividad **en cada clase** y también la actividad **fuera de los días de clase** (fines de semana u otros días). `Commits` = commits de trabajo (no-merge); `Merges` = merges de PR (también son push). Los días sin actividad dicen **sin actividad**.
+> Se consideran las **29 clases** del período (miércoles y viernes, según `config/constancia.json`; feriados y semanas sin clase descontados). Para cada alumno se muestra la actividad **en cada clase** y también la actividad **fuera de los días de clase** (fines de semana u otros días). `Commits` = commits de trabajo (no-merge); `Merges` = merges de PR (también son push). Los días sin actividad dicen **sin actividad**.
 
 ### santi-dona
 
-**15/28 clases con actividad** · total del período: 39 commits · 29 merges
+**15/29 clases con actividad** · total del período: 39 commits · 29 merges
 
 | Fecha | Actividad | Repositorios | Commits / merges |
 |---|:--:|---|--:|
@@ -198,6 +198,7 @@ Cada aspecto indica **qué mide**, **por qué importa** y **tu resultado**. Cuan
 | 2026-11-11 | No | sin actividad | 0 / 0 |
 | 2026-11-13 | No | sin actividad | 0 / 0 |
 | 2026-11-18 | **Sí** | TaskMateAI-programacion3 | 1 / 1 |
+| 2026-11-20 | No | sin actividad | 0 / 0 |
 
 **Fuera de clase:** 1 fecha(s) con actividad · 0 commits · 1 merges
 
@@ -213,18 +214,18 @@ Se listan los archivos y líneas que el análisis marca para cada criterio en ro
 
 - `apps/frontend-react/src/types/api.ts` — 125 línea(s) duplicada(s)
 - `apps/frontend-vue/src/types/api.ts` — 118 línea(s) duplicada(s)
-- `apps/frontend-react/src/settings/settings.ts` — 88 línea(s) duplicada(s)
 - `apps/frontend-vue/src/settings/settings.ts` — 88 línea(s) duplicada(s)
-- `apps/frontend-vue/src/utils/taskUtils.ts` — 74 línea(s) duplicada(s)
+- `apps/frontend-react/src/settings/settings.ts` — 88 línea(s) duplicada(s)
 - `apps/frontend-react/src/components/tasks/taskUtils.ts` — 74 línea(s) duplicada(s)
+- `apps/frontend-vue/src/utils/taskUtils.ts` — 74 línea(s) duplicada(s)
 - `apps/frontend-vue/src/command-palette/commandSearch.ts` — 61 línea(s) duplicada(s)
 - `apps/frontend-react/src/command-palette/commandSearch.ts` — 61 línea(s) duplicada(s)
-- `apps/frontend-react/src/command-palette/paletteEntries.ts` — 55 línea(s) duplicada(s)
 - `apps/frontend-vue/src/command-palette/paletteEntries.ts` — 55 línea(s) duplicada(s)
-- `apps/frontend-vue/src/theme/theme.ts` — 52 línea(s) duplicada(s)
+- `apps/frontend-react/src/command-palette/paletteEntries.ts` — 55 línea(s) duplicada(s)
 - `apps/frontend-react/src/theme/theme.ts` — 52 línea(s) duplicada(s)
-- `apps/frontend-vue/src/utils/aiText.ts` — 45 línea(s) duplicada(s)
+- `apps/frontend-vue/src/theme/theme.ts` — 52 línea(s) duplicada(s)
 - `apps/frontend-react/src/utils/aiText.ts` — 45 línea(s) duplicada(s)
+- `apps/frontend-vue/src/utils/aiText.ts` — 45 línea(s) duplicada(s)
 - `apps/frontend-react/src/command-palette/shortcuts.ts` — 37 línea(s) duplicada(s)
 
 **Componente demasiado grande (BigC)** — 6 hallazgo(s) en 6 archivo(s):
