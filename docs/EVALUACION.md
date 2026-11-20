@@ -208,36 +208,118 @@ Cada aspecto indica **qué mide**, **por qué importa** y **tu resultado**. Cuan
 
 ## 7. Anexo: archivos donde se originan los problemas
 
-Se listan los archivos y líneas que el análisis marca para cada criterio en rojo. Para **duplicación** se muestran los archivos con más líneas repetidas; para **cobertura**, las unidades por debajo del umbral.
+Se listan **todos** los archivos y líneas que el análisis marca para cada criterio en rojo. Para **duplicación** se muestran los archivos con líneas repetidas; para **cobertura**, las unidades por debajo del umbral.
 
-**Duplicación (duplicacion)** — archivos con más líneas repetidas:
+**Resumen por archivo** — archivos con más hallazgos:
 
-- `apps/frontend-react/src/types/api.ts` — 125 línea(s) duplicada(s)
-- `apps/frontend-vue/src/types/api.ts` — 118 línea(s) duplicada(s)
-- `apps/frontend-vue/src/settings/settings.ts` — 88 línea(s) duplicada(s)
-- `apps/frontend-react/src/settings/settings.ts` — 88 línea(s) duplicada(s)
-- `apps/frontend-react/src/components/tasks/taskUtils.ts` — 74 línea(s) duplicada(s)
-- `apps/frontend-vue/src/utils/taskUtils.ts` — 74 línea(s) duplicada(s)
-- `apps/frontend-vue/src/command-palette/commandSearch.ts` — 61 línea(s) duplicada(s)
-- `apps/frontend-react/src/command-palette/commandSearch.ts` — 61 línea(s) duplicada(s)
-- `apps/frontend-vue/src/command-palette/paletteEntries.ts` — 55 línea(s) duplicada(s)
-- `apps/frontend-react/src/command-palette/paletteEntries.ts` — 55 línea(s) duplicada(s)
-- `apps/frontend-react/src/theme/theme.ts` — 52 línea(s) duplicada(s)
-- `apps/frontend-vue/src/theme/theme.ts` — 52 línea(s) duplicada(s)
-- `apps/frontend-react/src/utils/aiText.ts` — 45 línea(s) duplicada(s)
-- `apps/frontend-vue/src/utils/aiText.ts` — 45 línea(s) duplicada(s)
-- `apps/frontend-react/src/command-palette/shortcuts.ts` — 37 línea(s) duplicada(s)
+| Archivo | Hallazgos | Peso total | Señales |
+|---|---:|---:|---|
+| `apps/backend-python/src/services/groq.py` | 7 | 32 | high_complexity, long_function |
+| `apps/frontend-react/src/command-palette/CommandPalette.tsx` | 3 | 14 | big_component, long_params |
+| `apps/backend-node/src/routes/ai.ts` | 2 | 9 | high_complexity, long_function |
+| `apps/backend-node/src/routes/auth.ts` | 2 | 9 | high_complexity, long_function |
+| `apps/backend-node/src/routes/categories.ts` | 2 | 9 | high_complexity, long_function |
+| `apps/backend-node/src/routes/friends.ts` | 2 | 9 | high_complexity, long_function |
+| `apps/backend-node/src/routes/messages.ts` | 2 | 9 | high_complexity, long_function |
+| `apps/backend-node/src/routes/tasks.ts` | 2 | 9 | high_complexity, long_function |
+| `apps/backend-node/src/routes/workspaces.ts` | 2 | 9 | high_complexity, long_function |
+| `apps/frontend-react/src/components/kanban/KanbanBoard.tsx` | 2 | 8 | long_function |
+| `apps/frontend-react/src/components/otp/GlassyOTP.tsx` | 2 | 10 | big_component, long_params |
+| `apps/frontend-react/src/components/otp/OtpSteps.tsx` | 2 | 8 | long_params |
+| `apps/frontend-react/src/components/settings/SecurityTab.tsx` | 2 | 9 | high_complexity, long_function |
+| `apps/frontend-react/src/components/tasks/TaskCard.tsx` | 2 | 8 | long_params |
+| `apps/frontend-react/src/hooks/useChatThreads.ts` | 2 | 9 | high_complexity, long_function |
+| `apps/frontend-react/src/hooks/useMessages.ts` | 2 | 9 | high_complexity, long_function |
+| `apps/frontend-react/src/hooks/useProductivityReport.ts` | 2 | 9 | high_complexity, long_function |
+| `apps/frontend-react/src/pages/Dashboard.tsx` | 2 | 9 | high_complexity, long_function |
+| `apps/frontend-react/src/pages/Tasks.tsx` | 2 | 9 | high_complexity, long_function |
+| `apps/frontend-react/src/views/MessagesView.tsx` | 2 | 9 | high_complexity, long_function |
+| `apps/frontend-vue/src/composables/useChatThreads.ts` | 2 | 9 | high_complexity, long_function |
+| `apps/frontend-vue/src/composables/useMessages.ts` | 2 | 9 | high_complexity, long_function |
+| `apps/frontend-vue/src/composables/useProductivityReport.ts` | 2 | 9 | high_complexity, long_function |
+| `scripts/cobertura/merge_cobertura.py` | 2 | 8 | long_function |
+| `apps/backend-node/prisma/seed.ts` | 1 | 4 | long_function |
+| … | … | … | y 30 archivo(s) más |
+
+**Duplicación (duplicacion)** — archivos con líneas repetidas:
+
+| Archivo | Líneas duplicadas |
+|---|---:|
+| `apps/frontend-react/src/types/api.ts` | 125 |
+| `apps/frontend-vue/src/types/api.ts` | 118 |
+| `apps/frontend-react/src/settings/settings.ts` | 88 |
+| `apps/frontend-vue/src/settings/settings.ts` | 88 |
+| `apps/frontend-react/src/components/tasks/taskUtils.ts` | 74 |
+| `apps/frontend-vue/src/utils/taskUtils.ts` | 74 |
+| `apps/frontend-react/src/command-palette/commandSearch.ts` | 61 |
+| `apps/frontend-vue/src/command-palette/commandSearch.ts` | 61 |
+| `apps/frontend-react/src/command-palette/paletteEntries.ts` | 55 |
+| `apps/frontend-vue/src/command-palette/paletteEntries.ts` | 55 |
+| `apps/frontend-react/src/theme/theme.ts` | 52 |
+| `apps/frontend-vue/src/theme/theme.ts` | 52 |
+| `apps/frontend-react/src/utils/aiText.ts` | 45 |
+| `apps/frontend-vue/src/utils/aiText.ts` | 45 |
+| `apps/frontend-react/src/command-palette/shortcuts.ts` | 37 |
+| `apps/frontend-vue/src/command-palette/shortcuts.ts` | 37 |
+| `apps/frontend-react/src/components/otp/otpInput.ts` | 24 |
+| `apps/frontend-react/src/settings/exporters.ts` | 24 |
+| `apps/frontend-react/src/utils/gamification.ts` | 24 |
+| `apps/frontend-vue/src/components/otp/otpInput.ts` | 24 |
+| `apps/frontend-vue/src/settings/exporters.ts` | 24 |
+| `apps/frontend-vue/src/utils/gamification.ts` | 24 |
+| `apps/frontend-react/src/components/dashboard/productivity.ts` | 20 |
+| `apps/frontend-vue/src/components/dashboard/productivity.ts` | 20 |
+| `apps/frontend-vue/src/components/otp/GlassyOTP.vue` | 17 |
+| `apps/frontend-react/src/components/otp/otpCopy.ts` | 15 |
+| `apps/frontend-vue/src/components/otp/otpCopy.ts` | 15 |
+| `apps/frontend-react/src/messages/messageUtils.ts` | 14 |
+| `apps/frontend-vue/src/messages/messageUtils.ts` | 14 |
+| `apps/frontend-react/src/components/dashboard/dashboardStats.ts` | 13 |
+| `apps/frontend-vue/src/components/dashboard/dashboardStats.ts` | 13 |
+| `apps/frontend-react/src/components/kanban/kanbanUtils.ts` | 12 |
+| `apps/frontend-react/src/components/otp/GlassyOTP.tsx` | 12 |
+| `apps/frontend-vue/src/components/kanban/kanbanUtils.ts` | 12 |
+| `apps/frontend-react/src/components/ai/suggestions.ts` | 11 |
+| `apps/frontend-react/src/utils/download.ts` | 11 |
+| `apps/frontend-vue/src/components/ai/suggestions.ts` | 11 |
+| `apps/frontend-vue/src/utils/download.ts` | 11 |
+| `apps/backend-node/src/services/chatCommands.ts` | 10 |
+| `apps/backend-python/src/schemas/task.py` | 10 |
+| `apps/frontend-react/src/hooks/useChatThreads.ts` | 10 |
+| `apps/frontend-vue/src/utils/chatUtils.ts` | 10 |
+| `apps/frontend-react/src/components/dashboard/DashboardTaskList.tsx` | 8 |
+| `apps/frontend-vue/src/components/tasks/DashboardTaskList.vue` | 8 |
+| `apps/frontend-react/src/context/WorkspaceProvider.tsx` | 7 |
+| `apps/frontend-react/src/hooks/useViewMode.ts` | 7 |
+| `apps/frontend-vue/src/composables/useViewMode.ts` | 7 |
+| `apps/frontend-vue/src/stores/workspaces.ts` | 7 |
+| `apps/frontend-vue/src/types/auth.ts` | 7 |
+| `apps/frontend-react/src/api/workspacesApi.ts` | 6 |
+| `apps/frontend-react/src/command-palette/CommandPalette.tsx` | 6 |
+| `apps/frontend-react/src/components/dashboard/ViewModeToggle.tsx` | 6 |
+| `apps/frontend-react/src/components/layout/SidebarCapsule.tsx` | 6 |
+| `apps/frontend-react/src/components/messages/ConversationPane.tsx` | 6 |
+| `apps/frontend-vue/src/api/workspacesApi.ts` | 6 |
+| `apps/frontend-vue/src/components/command-palette/CommandPalette.vue` | 6 |
+| `apps/frontend-vue/src/components/dashboard/ViewModeToggle.vue` | 6 |
+| `apps/frontend-vue/src/components/layout/AppShell.vue` | 6 |
+| `apps/frontend-vue/src/components/messages/ConversationPane.vue` | 6 |
+| `apps/frontend-react/src/components/friends/FriendsModal.tsx` | 5 |
+| `apps/frontend-react/src/views/SettingsView.tsx` | 5 |
+| `apps/frontend-vue/src/components/friends/FriendsModal.vue` | 5 |
+| `apps/frontend-vue/src/components/otp/OtpCodeStep.vue` | 5 |
+| `apps/frontend-vue/src/views/SettingsView.vue` | 5 |
 
 **Componente demasiado grande (BigC)** — 6 hallazgo(s) en 6 archivo(s):
 
-| Archivo | Línea(s) | Señal |
-|---|---|---|
-| `apps/frontend-react/src/command-palette/CommandPalette.tsx` | 1 | componente grande (213 líneas) |
-| `apps/frontend-react/src/components/friends/FriendsModal.tsx` | 1 | componente grande (167 líneas) |
-| `apps/frontend-react/src/components/otp/GlassyOTP.tsx` | 1 | componente grande (167 líneas) |
-| `apps/frontend-vue/src/components/command-palette/CommandPalette.vue` | 1 | componente grande (173 líneas) |
-| `apps/frontend-vue/src/views/DashboardView.vue` | 1 | componente grande (172 líneas) |
-| `apps/frontend-vue/src/views/TasksView.vue` | 1 | componente grande (193 líneas) |
+| Archivo | Línea(s) | Señal | Detalle |
+|---|---|---|---|
+| `apps/frontend-react/src/command-palette/CommandPalette.tsx` | 1 | big_component | componente grande (213 líneas) |
+| `apps/frontend-react/src/components/friends/FriendsModal.tsx` | 1 | big_component | componente grande (167 líneas) |
+| `apps/frontend-react/src/components/otp/GlassyOTP.tsx` | 1 | big_component | componente grande (167 líneas) |
+| `apps/frontend-vue/src/components/command-palette/CommandPalette.vue` | 1 | big_component | componente grande (173 líneas) |
+| `apps/frontend-vue/src/views/DashboardView.vue` | 1 | big_component | componente grande (172 líneas) |
+| `apps/frontend-vue/src/views/TasksView.vue` | 1 | big_component | componente grande (193 líneas) |
 
 ---
 _Informe generado por la cátedra. Los umbrales corresponden al perfil `exigente`. Ante dudas, revisá el archivo y la línea señalados y el criterio en `CRITERIOS-CALIDAD.md`._
